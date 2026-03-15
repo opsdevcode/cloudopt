@@ -1,0 +1,73 @@
+---
+description: Branch workflow and protection rules for contributing to this repo
+globs:
+alwaysApply: true
+---
+
+# Branch Workflow and Protection Rules
+
+## Never work directly on main
+
+- **Do not make commits or edits on `main`** for any change. Always work on a branch.
+- **Before starting any new work**: create and checkout a new branch from `main`, then make changes. This applies to all change types: features, fixes, chores, docs, refactors, tests, CI/build, perf, etc.
+- **AI assistants**: when the user asks for any new change, create a branch first using a name that matches the conventional commit type (e.g. `feat/short-name`, `fix/short-name`, `chore/short-name`, `docs/short-name`, `refactor/short-name`, `test/short-name`, `ci/short-name`, `build/short-name`, `perf/short-name`), then implement. Do not commit or push to `main`.
+
+## Development Workflow
+
+1. **Create a branch from `main` first** (or fork and branch): `git checkout main && git pull && git checkout -b <type>/short-name` — use the type that matches your change (e.g. `feat/thing`, `fix/thing`, `chore/thing`, `docs/thing`, `refactor/thing`, `test/thing`, `ci/thing`, `build/thing`, `perf/thing`)
+2. Make all changes on that branch
+3. Commit and push the branch; open a pull request
+4. **After merge**: `git checkout main && git pull` — delete the merged branch locally: `git branch -d <type>/your-branch`
+
+## No Direct Pushes to main
+
+- Direct pushes to `main` are blocked by branch protection
+- All changes to `main` must go through a PR
+- PRs require at least one approval and (when configured) code owner review
+
+## Required Checks
+
+When branch protection and CI are configured:
+
+- **Version check** (`.github/workflows/version-check.yml`): Validates conventional commits and comments with the version that will be released when the PR is merged.
+- **Code owner review** and any other branch protection rules (see repo Settings).
+
+## Conventional Commits and versioning
+
+Version numbers are generated from conventional commits on merge to `main`. See the `conventional-commits-versioning` rule for commit types → version bump. Use the correct type so the release workflow produces the right version.
+
+## Conventional Commits (summary)
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
+
+- `feat:` – new feature
+- `fix:` or `perf:` – bug fix or performance
+- `chore:` – maintenance, dependencies
+- `docs:` – documentation
+- `refactor:` – code refactoring
+- `test:` – tests
+- `ci:` or `build:` – CI/CD or build changes
+
+Add `!` or `BREAKING CHANGE` footer for breaking changes.
+
+## PR Template
+
+When present, PR descriptions follow the template (`.github/PULL_REQUEST_TEMPLATE.md`) with:
+
+- **what** – high-level description of changes
+- **why** – rationale and business case
+- **testing, docs & notes** – testing approach, docs, breaking changes, AI assistant usage
+- **references** – links to issues or docs (e.g. `closes #123`)
+
+## When Creating PRs (AI Assistants)
+
+- Ensure the work is on a branch (not `main`) before creating a PR. If the user is on `main`, create a branch from the current state and re-apply or cherry-pick commits as needed so the PR is from a branch.
+- When creating a PR (e.g. via `gh pr create`), **always output a clickable link** to the PR so the user can open it immediately. Example: `[PR #123](https://github.com/opsdevcode/cloudopt/pull/123)`.
+
+## Branch Protection (GitHub Settings)
+
+This repo configures branch protection for `main`:
+
+- Require a pull request before merging
+- Require approval(s) and code owner review (see CODEOWNERS)
+- Do not allow force pushes or branch deletion from the UI

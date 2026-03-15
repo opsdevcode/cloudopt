@@ -1,0 +1,164 @@
+# On PR: ruff (lint) + mypy + full test suite (pytest with Postgres).
+# CLI tests run in a separate workflow (ci-cli.yml) only when CLI code changes.
+# Workflow runs on every PR; jobs run only when path filter matches, else report success (skip) so status is not pending.
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    name: Ruff lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ci:
+              - "apps/**"
+              - "packages/**"
+              - "alembic/**"
+              - "tests/**"
+              - "**/*.py"
+              - "pyproject.toml"
+              - "docker-compose.yml"
+              - "Dockerfile*"
+              - ".github/workflows/ci.yml"
+
+      - uses: actions/setup-python@v6
+        if: steps.filter.outputs.ci == 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        if: steps.filter.outputs.ci == 'true'
+        run: pip install "ruff>=0.2.0"
+
+      - name: Ruff check
+        if: steps.filter.outputs.ci == 'true'
+        run: ruff check .
+
+      - name: Ruff format check
+        if: steps.filter.outputs.ci == 'true'
+        run: ruff format --check .
+
+      - name: Skip (no relevant paths changed)
+        if: steps.filter.outputs.ci != 'true'
+        run: echo "Skipped — no relevant paths changed"
+
+  mypy:
+    name: Mypy type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ci:
+              - "apps/**"
+              - "packages/**"
+              - "alembic/**"
+              - "tests/**"
+              - "**/*.py"
+              - "pyproject.toml"
+              - "docker-compose.yml"
+              - "Dockerfile*"
+              - ".github/workflows/ci.yml"
+
+      - uses: actions/setup-python@v6
+        if: steps.filter.outputs.ci == 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: steps.filter.outputs.ci == 'true'
+        run: pip install -e ".[dev]"
+
+      - name: Mypy
+        if: steps.filter.outputs.ci == 'true'
+        run: mypy apps packages
+
+      - name: Skip (no relevant paths changed)
+        if: steps.filter.outputs.ci != 'true'
+        run: echo "Skipped — no relevant paths changed"
+
+  test:
+    name: Pytest
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cloudopt
+          POSTGRES_USER: cloudopt
+          POSTGRES_PASSWORD: cloudopt
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cloudopt"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      CLOUDOPT_DATABASE_URL: postgresql+asyncpg://cloudopt:cloudopt@localhost:5432/cloudopt
+      CLOUDOPT_DATABASE_URL_SYNC: postgresql://cloudopt:cloudopt@localhost:5432/cloudopt
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ci:
+              - "apps/**"
+              - "packages/**"
+              - "alembic/**"
+              - "tests/**"
+              - "**/*.py"
+              - "pyproject.toml"
+              - "docker-compose.yml"
+              - "Dockerfile*"
+              - ".github/workflows/ci.yml"
+
+      - uses: actions/setup-python@v6
+        if: steps.filter.outputs.ci == 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: steps.filter.outputs.ci == 'true'
+        run: pip install -e ".[dev]"
+
+      - name: Run migrations
+        if: steps.filter.outputs.ci == 'true'
+        run: alembic upgrade head
+
+      - name: Run tests
+        if: steps.filter.outputs.ci == 'true'
+        run: pytest --tb=short -v
+
+      - name: Skip (no relevant paths changed)
+        if: steps.filter.outputs.ci != 'true'
+        run: echo "Skipped — no relevant paths changed"

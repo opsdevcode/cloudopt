@@ -1,0 +1,94 @@
+---
+description: Guidelines for reviewing pull requests. Auto-activates when the user mentions reviewing a PR, PR review, code review, or checking a pull request.
+globs:
+alwaysApply: false
+---
+
+# Pull Request Review
+
+## Checking Out a PR
+
+To review a PR locally, check out its branch:
+
+```bash
+gh pr checkout <number>
+```
+
+This fetches the PR branch and switches to it. To return to your previous branch afterward:
+
+```bash
+git switch -
+```
+
+If the user provides a PR number or URL, offer to check it out so they can browse the code in the editor. Stash or commit any uncommitted work first to avoid conflicts.
+
+## Getting PR Context
+
+1. **Fetch the PR** using `gh pr view <number> --json title,body,files,commits,reviews,labels` or `gh pr diff <number>`.
+2. **Read changed files** to understand the full context, not just the diff.
+3. **Check CI status** with `gh pr checks <number>` (when workflows exist).
+
+## Review Checklist
+
+### API (FastAPI)
+
+- **Routers**: Do new or changed endpoints live under `/api/v1`? Keep routers thin (validate input, delegate to services or packages).
+- **Validation**: Are request bodies and params validated with Pydantic? Use `packages.core.config` for settings.
+- **Auth**: When added, apply API key or auth where required; no sensitive data exposed without auth.
+- **Dependencies**: Are new dependencies added to `pyproject.toml` with pinned versions?
+
+### CLI (Typer)
+
+- **Consistency**: Do new commands follow existing patterns under `apps/cli/commands/`? Use Typer (this repo uses Typer, not Click).
+- **Client**: Do CLI commands call the API (e.g. via httpx) or run local logic in `packages/`? Avoid direct DB access from CLI when API exists.
+- **Error handling**: Are exceptions caught and surfaced with clear messages for end users, not raw tracebacks?
+- **Output**: Is text or JSON output consistent with existing commands (e.g. `cloudopt scan`)?
+
+### Python / Packages
+
+- **Structure**: Shared logic lives in `packages/` (e.g. `packages/core`, `packages/aws`, `packages/ai`, `packages/finops`). Routers in `apps/api/routes/`; workers in `apps/worker/`.
+- **Models**: SQLAlchemy models are in `packages/core/models.py`. Pydantic request/response schemas can live in route modules or a shared schemas module.
+- **Subprocess / external calls**: If scripts or helpers call external commands, invoke safely (prefer list form over `shell=True`).
+- **Tests**: Do new or changed code paths have or update tests? Check for `tests/`.
+
+### Database / Schema
+
+- **Migrations**: Schema changes go through Alembic: add a new migration in `alembic/versions/` and run `alembic upgrade head`. No raw SQL with user input.
+- **JSONB usage**: Use `details`, `metadata_` (Scan), or similar for flexible fields; do not store secrets unencrypted in JSON/JSONB.
+
+### Security
+
+- **No secrets in code**: No API keys, passwords, tokens, or credentials committed. Use env or config.
+- **Input validation**: Are user inputs validated and sanitized? No injection risks in raw SQL or shell.
+
+### Versioning and commits
+
+- **Conventional commits**: Do all commits in the PR use conventional commit format (`type(scope): description`)? The version-check workflow will fail otherwise, and the wrong version may be released (see `conventional-commits-versioning` rule).
+- **Commit types**: Are `feat`/`fix`/`chore`/etc. used correctly for the intended version bump (minor/patch/major)?
+
+### General
+
+- **PR scope**: Is the PR focused on a single concern, or should it be split?
+- **Commit quality**: Are commits logical and well-described (see `git-commit-pr-messages` rule)?
+- **Documentation**: Are non-obvious changes explained in the PR description or inline? Update `README.md` or `PROJECT_SPEC.md` when relevant.
+- **Rollback**: Could this change be safely reverted if problems arise?
+
+## Providing Feedback
+
+- **Be specific**: Reference file paths and line numbers.
+- **Distinguish severity**: Clearly separate blockers from suggestions and nits.
+- **Suggest fixes**: When flagging an issue, propose a concrete fix when possible.
+- **Acknowledge good work**: Call out well-done aspects, not just problems.
+
+## Using `gh` for Review
+
+```bash
+# Submit a review comment
+gh pr review <number> --comment --body "Review comments here"
+
+# Approve
+gh pr review <number> --approve --body "LGTM — verified locally"
+
+# Request changes
+gh pr review <number> --request-changes --body "See comments on API validation"
+```

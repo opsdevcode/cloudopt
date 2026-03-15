@@ -1,0 +1,39 @@
+---
+description: Versioning is driven by conventional commits; every merge to main produces a new version. PRs get a version preview.
+globs:
+alwaysApply: true
+---
+
+# Conventional Commits and Versioning
+
+## How versioning works
+
+- Use **conventional commits** on all commits so that when release automation is added, versioning will work correctly.
+- When release workflows are added: every merge to `main` can trigger a release (version from commits since last tag); every PR can run a version-check that comments with the version preview.
+
+## Commit types → version bump
+
+| Commit type | Bump |
+|-------------|------|
+| `feat:` | **Minor** (0.1.0 → 0.2.0) |
+| `fix:`, `perf:` | **Patch** (0.1.0 → 0.1.1) |
+| `docs:`, `chore:`, `refactor:`, `test:`, `ci:`, `build:` | **Patch** (by default; configurable) |
+| `feat!:` or body with `BREAKING CHANGE:` | **Major** (0.1.0 → 1.0.0) |
+
+Use the correct type so the next version is computed correctly. Scopes are optional but help (e.g. `feat(api):`, `fix(cli):`).
+
+## Required for versioning
+
+- **Conventional Commits format** on all commits that will be merged to `main` (subject line: `type(scope): description` or `type: description`).
+- When a version-check workflow is added, do not merge until it passes.
+
+## Workflows (when added)
+
+- **`.github/workflows/release.yml`**: On push to `main`, can run `python-semantic-release`, bump version, tag, and create a GitHub release.
+- **`.github/workflows/version-check.yml`**: On PR to `main`, can validate conventional commits and comment with the version preview.
+- Config: `[tool.semantic_release]` in `pyproject.toml` when using python-semantic-release.
+
+## References
+
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [python-semantic-release](https://python-semantic-release.readthedocs.io/) (optional, for automated versioning)

@@ -1,0 +1,81 @@
+# On PR to main: validate conventional commits and comment with the version that will be released when merged.
+# Workflow runs on every PR; job runs only when path filter matches, else report success (skip) so status is not pending.
+name: Version check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  version-check:
+    name: Version check
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            version:
+              - "apps/**"
+              - "packages/**"
+              - "alembic/**"
+              - "**/*.py"
+              - "pyproject.toml"
+              - ".github/workflows/version-check.yml"
+              - ".github/workflows/release.yml"
+
+      - name: Set up Python
+        if: steps.filter.outputs.version == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install python-semantic-release
+        if: steps.filter.outputs.version == 'true'
+        run: pip install python-semantic-release>=10.5.0
+
+      - name: Get next version (noop)
+        if: steps.filter.outputs.version == 'true'
+        id: next
+        timeout-minutes: 1
+        run: |
+          out=$(timeout 45 semantic-release version --noop -v 2 2>&1) || true
+          echo "$out"
+          next_ver=$(echo "$out" | grep -iE "next (release )?version is v?[0-9]+\.[0-9]+\.[0-9]+" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+          [ -z "$next_ver" ] && next_ver=$(echo "$out" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+          echo "version=${next_ver}" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with version preview
+        if: steps.filter.outputs.version == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.next.outputs.version }}';
+            const body = version
+              ? `**Version preview:** Merging this PR will release version \`v${version}\` (from conventional commits).`
+              : `**Version check:** Commits follow conventional commits. Merge to \`main\` to trigger release.`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+      - name: Skip (no relevant paths changed)
+        if: steps.filter.outputs.version != 'true'
+        run: echo "Skipped — no relevant paths changed"

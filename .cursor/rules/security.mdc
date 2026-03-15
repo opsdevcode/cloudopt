@@ -1,0 +1,44 @@
+---
+description: Security guidelines for CloudOpt development. Always active.
+globs:
+alwaysApply: true
+---
+
+# Security
+
+## Secrets and credentials
+
+- **Never commit secrets.** No API keys, passwords, tokens, database URLs, or private keys in source code.
+- Store secrets in environment variables or a `.env` file (which is gitignored). Use `.env.example` as a template with placeholder values only.
+- If you add a new secret, update `.env.example` with a descriptive placeholder.
+
+## Authentication
+
+- Protect `/api/v1` endpoints as needed (e.g. API key or future auth). Do not expose sensitive data without authentication.
+- When auth is added, read keys from `packages.core.config` settings (env); never hardcode.
+
+## Input validation
+
+- Validate all request input with Pydantic schemas. Never pass raw user input to SQL queries, shell commands, or file paths.
+- Do not use `shell=True` in `subprocess` calls. Use list form instead.
+- Do not use `exec()`, `eval()`, or similar dynamic code execution.
+
+## Dependencies
+
+- Pin dependencies in `pyproject.toml` (minimum version).
+- Run `pip-audit` before adding or upgrading dependencies. When CI is added, run pip-audit on PRs.
+- Review changelogs for security fixes when upgrading.
+
+## Database
+
+- Use SQLAlchemy ORM for all queries. No raw SQL strings with user input.
+- Do not store sensitive data (passwords, tokens, PII) unencrypted in JSONB fields. Use `api_key_hash` patterns where hashing is needed.
+
+## CI and pre-commit
+
+- When CI is added (e.g. `.github/workflows/ci.yml`), run ruff, mypy, pytest, and pip-audit on every PR.
+- When pre-commit is added (`.pre-commit-config.yaml`), run it locally; use `pre-commit install`.
+
+## Reporting vulnerabilities
+
+Add a `SECURITY.md` when publishing; use it to describe how to report security issues.

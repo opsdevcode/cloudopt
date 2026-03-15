@@ -1,0 +1,126 @@
+---
+description: Guidelines for drafting Git commit messages and PR comments
+globs:
+alwaysApply: true
+---
+
+# Git Commit Messages and PR Comments
+
+## Pull Request Comments
+
+When a PR template exists (`.github/PULL_REQUEST_TEMPLATE.md`), **PR descriptions must follow it**. Expected sections:
+
+### Required Sections
+
+1. **what**: High-level description of what changed (plain English, bullet points)
+2. **why**: Justifications and reasons for the changes (business case, problem being solved)
+3. **testing, docs & notes**: Testing approach, documentation updates, breaking changes, surprising behavior
+4. **references**: Links to GitHub issues or helpful documentation
+   - Use `closes #123` for GitHub issues
+
+### PR Comment Guidelines
+
+- **Be concise**: Only mention what's relevant.
+- Use bullet points for conciseness
+- Be clear and specific about what changed and why
+- **Omit empty sections**: If there are no breaking changes, no surprising behavior, no testing needed, etc., simply omit those points rather than explicitly stating "no breaking changes" or "no testing required"
+- **AI assistant usage**: If Cursor or other AI assistants were used extensively in creating the PR, mention this in the testing/docs section (e.g., "Created with Cursor" or "Assisted by Claude Code").
+
+### When Creating PRs (AI Assistants)
+
+When creating a PR (e.g. via `gh pr create`), **always output a clickable link** to the PR in your response so the user can open it immediately. Use Markdown link format: `[PR #123](https://github.com/opsdevcode/cloudopt/pull/123)` or a bare URL.
+
+## Commit Messages
+
+**Commit messages should be concise** and focus on what changed. Unlike PR messages which follow a formal template, commit messages use a more natural, bulleted format that combines what is being done and why (if the why isn't obvious).
+
+### Conventional Commits (Required for versioning)
+
+This repo uses **conventional commits** to drive version numbers. Every merge to `main` runs a release workflow that computes the next version from commit types (see `conventional-commits-versioning` rule). Use the `<type>(<scope>): <description>` format:
+
+- `feat:` – new feature (minor bump)
+- `fix:` – bug fix (patch bump)
+- `perf:` – performance (patch bump)
+- `chore:` – maintenance, dependencies (patch bump)
+- `docs:` – documentation (patch bump)
+- `refactor:` – code refactoring (patch bump)
+- `test:` – tests (patch bump)
+- `ci:` – CI/CD changes (patch bump)
+- `build:` – build system changes (patch bump)
+
+Use `feat!:` or a `BREAKING CHANGE:` footer for major bumps. Scopes (e.g. `feat(api):`, `fix(cli):`) are optional but recommended.
+
+### Commit Message Structure
+
+**Conventional Commits format (recommended):**
+```
+<type>(<scope>): <description> (50-72 characters, imperative mood)
+
+- Bulleted list of changes
+- Combine what and why naturally (only include why if not obvious)
+- Additional context if needed
+```
+
+**Traditional format (also acceptable):**
+```
+<subject line> (50-72 characters, imperative mood)
+
+- Bulleted list of changes
+- Combine what and why naturally (only include why if not obvious)
+- Additional context if needed
+```
+
+### Commit Message Guidelines
+
+- **Subject line**:
+  - Use imperative mood ("Add feature" not "Added feature" or "Adds feature")
+  - Keep to 50-72 characters
+  - Capitalize first letter
+  - No period at the end
+  - Be specific and descriptive
+
+- **Body** (optional, for more complex changes):
+  - Use bulleted list format
+  - Combine what is being done and why naturally in each bullet point
+  - Only include "why" if it's not obvious from the change itself
+  - Keep concise
+  - Can include references if closing issues: `closes #123`
+
+### Examples
+
+**Simple commit (subject line only):**
+```
+feat(api): add pagination to scans list endpoint
+```
+
+**Commit with body:**
+```
+fix(cli): resolve scan timeout on large clusters
+
+- Increase default timeout for scan request
+- Surface clearer error when API times out
+
+closes #42
+```
+
+**Other examples:**
+```
+docs: update README quick start for CloudOpt env vars
+chore(deps): pin fastapi to 0.109.x
+test(api): add unit tests for scans and health endpoint
+feat(worker): enqueue scan analysis job on scan create
+```
+
+## Relationship Between Commits and PRs
+
+- **Commits**: Use natural, bulleted format combining what and why (if not obvious). Focus on individual logical changes, be concise.
+- **PRs**: Must follow the formal template with **what**, **why**, **testing, docs & notes**, and **references** sections. Be concise; only include relevant information.
+- A PR may contain multiple commits; the PR description should summarize all commits and provide full context.
+
+## Best Practices
+
+- **Write clear, descriptive messages**: Future you (and contributors) will thank you
+- **Use present tense, imperative mood**: "Add feature" not "Added feature"
+- **Be specific**: "Fix authentication bug" not "Fix bug"
+- **Keep commits focused**: One logical change per commit
+- **Link issues when relevant**: Use `closes #123` in commit messages and in the PR references section

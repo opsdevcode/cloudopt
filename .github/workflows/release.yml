@@ -1,0 +1,62 @@
+# On push to main: compute next version from conventional commits, bump pyproject.toml, tag, and create GitHub release.
+# Version bump: feat -> minor; fix/perf/docs/chore/etc. -> patch; BREAKING CHANGE or feat! -> major.
+# Runs only when source or release config change.
+#
+# Protected main branch: GITHUB_TOKEN cannot push to protected branches. Add a repo secret RELEASE_PAT
+# (Personal Access Token with repo scope from a user who can bypass branch protection), and in
+# Settings → Branches → main → "Allow specified actors to bypass required pull requests" add that user.
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "alembic/**"
+      - "**/*.py"
+      - "pyproject.toml"
+      - ".github/workflows/release.yml"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.ref_name }}
+      cancel-in-progress: false
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0  # full history required for semantic-release to find commits since last tag
+          token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Reset to workflow SHA
+        run: git reset --hard ${{ github.sha }}
+
+      - name: Semantic version and release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v10.5.3
+        with:
+          github_token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+          build: "false"
+          verbosity: "2"
+
+    outputs:
+      released: ${{ steps.release.outputs.released || 'false' }}
+      version: ${{ steps.release.outputs.version || '' }}
+      tag: ${{ steps.release.outputs.tag || '' }}
