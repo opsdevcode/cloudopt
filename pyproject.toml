@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloudopt"
-version = "0.1.0"
+version = "1.0.0"
 description = "AI-powered FinOps platform for AWS and Kubernetes cost optimization"
 readme = "README.md"
 requires-python = ">=3.11"
