@@ -45,3 +45,13 @@ def get_ec2_client(region_name: str | None = None):
 def get_cloudwatch_client(region_name: str | None = None):
     """Placeholder: CloudWatch client for metrics."""
     return get_aws_client("cloudwatch", region_name=region_name)
+
+
+def get_securityhub_client(region_name: str | None = None):
+    """AWS Security Hub client for aggregated findings."""
+    return get_aws_client("securityhub", region_name=region_name)
+
+
+def get_config_client(region_name: str | None = None):
+    """AWS Config client for rule compliance."""
+    return get_aws_client("config", region_name=region_name)

@@ -20,12 +20,13 @@ def uuid_str() -> str:
 
 
 class Scan(Base):
-    """A single cost optimization scan run."""
+    """A single scan run (FinOps, cloud audit, Kubernetes audit, or combined)."""
 
     __tablename__ = "scans"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_str)
     tenant_id: Mapped[str] = mapped_column(String(255), nullable=False, default="default")
+    scan_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="finops")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
     cluster_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -42,7 +43,7 @@ class Scan(Base):
 
 
 class Finding(Base):
-    """A single cost optimization finding from a scan."""
+    """A finding from a scan: cost optimization and/or audit/compliance."""
 
     __tablename__ = "findings"
 
@@ -50,6 +51,10 @@ class Finding(Base):
     scan_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("scans.id", ondelete="CASCADE"), nullable=False
     )
+    finding_kind: Mapped[str] = mapped_column(String(64), nullable=False, default="cost")
+    framework: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    control_id: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    audit_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     category: Mapped[str] = mapped_column(String(64), nullable=False)
     resource_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
