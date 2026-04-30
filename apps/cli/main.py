@@ -2,7 +2,7 @@
 
 import typer
 
-from apps.cli.commands import scan
+from apps.cli.commands import audit, scan
 
 app = typer.Typer(
     name="cloudopt",
@@ -11,6 +11,7 @@ app = typer.Typer(
 )
 
 app.add_typer(scan.scan_app, name="scan")
+app.add_typer(audit.audit_app, name="audit")
 
 
 if __name__ == "__main__":

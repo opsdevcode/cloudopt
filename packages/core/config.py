@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     aws_region: str | None = None
     aws_access_key_id: str | None = None
     aws_secret_access_key: str | None = None
+    # Audit collectors (optional limits to bound worker runtime)
+    audit_security_hub_max_findings: int = 500
+    audit_config_max_rules: int = 200
+    # CLI / integrations
+    api_base_url: str = "http://127.0.0.1:8000"
 
     # AI: OpenAI-compatible API (vLLM, OpenAI, or other)
     # If llm_base_url is set, it takes precedence for chat/embeddings; else https://api.openai.com/v1
@@ -49,6 +54,13 @@ class Settings(BaseSettings):
     # Agent (Phase C): tool-calling loop in worker
     agent_tools_enabled: bool = True
     agent_max_tool_rounds: int = 6
+
+    @field_validator("api_base_url", mode="before")
+    @classmethod
+    def _strip_api_base_url(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.rstrip("/")
+        return v
 
     @field_validator(
         "llm_base_url", "llm_api_key", "openai_api_key", "anthropic_api_key", mode="before"
