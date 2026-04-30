@@ -13,7 +13,7 @@ CloudOpt uses **retrieval and structured data** to reflect how each account uses
 | Mechanism | Purpose |
 |-----------|---------|
 | **Structured tenant fields** | Per-scan `tenant_id`, preferences and suppressions in Postgres (future fields as needed). |
-| **RAG (`rag_chunks`)** | Embeddings over findings text, scan summaries, and later CUR-derived snippets—scoped by **`tenant_id`**. |
+| **RAG (`rag_chunks`)** | Embeddings over findings text (including FinOps-oriented findings when embedded), scan summaries, and later CUR-derived snippets—scoped by **`tenant_id`**. Audit-heavy scans may skip bulk embedding to control cost; retrieval remains grounded in stored rows either way. |
 | **Prompt-time context** | Before generation, retrieve top-k chunks for **that tenant only** and attach them to the prompt. |
 | **Fine-tuning / LoRA** | Optional later for formatting or narrow tasks—not a substitute for RAG for factual account behavior. |
 

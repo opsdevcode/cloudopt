@@ -1,5 +1,7 @@
 # Security Policy
 
+CloudOpt stores **scan metadata and findings** that may describe cloud resources (identifiers, titles, compliance status). Operate it like any control plane: protect database backups, Redis, API endpoints, and credentials (AWS, LLM, database URLs).
+
 ## Supported versions
 
 | Version | Supported |

@@ -1,127 +1,104 @@
 # CloudOpt.dev
 
-CloudOpt.dev is an AI-powered FinOps platform designed to analyze and optimize cloud infrastructure costs, with a primary focus on AWS and Kubernetes.
+CloudOpt.dev is an **AI-assisted cloud platform** for teams operating **AWS** and **Kubernetes**. It combines **FinOps** (cost visibility and savings recommendations), **cloud posture** (AWS Security Hub, AWS Config, and room for more integrations), and **Kubernetes best-practice checks** (e.g. Polaris, kube-bench), normalized into a single **findings** model and API.
 
-The platform will ingest cloud billing data and infrastructure signals, analyze them using AI, and generate actionable cost optimization recommendations. Later versions will automatically create Terraform changes and GitHub pull requests to implement cost-saving improvements.
+Longer term the platform can ingest billing data and infrastructure signals at scale, analyze them with AI where appropriate, and eventually automate fixes (e.g. Terraform pull requests).
 
-The target users are platform engineers, DevOps teams, and FinOps teams managing AWS infrastructure.
+**Target users:** platform engineers, DevOps/SRE teams, security/compliance engineers, and FinOps teams.
 
-Primary differentiator: deep Kubernetes and Karpenter optimization.
-
----
-
-## MVP Goals
-
-The first version should provide:
-
-1. AWS cost data ingestion
-2. Infrastructure analysis
-3. Cost optimization findings
-4. API access to findings
-5. CLI scan commands
-
-Example output:
-
-Top savings opportunities:
-
-1. Reduce EKS node size
-Savings: $1,284/month
-
-2. Delete unused EBS volumes
-Savings: $412/month
-
-3. Switch workloads to spot
-Savings: $2,900/month
+**Differentiators:** unified cost + posture findings; deep Kubernetes awareness (cost and configuration); retrieval-grounded AI so recommendations stay tied to stored evidence.
 
 ---
 
-## Technology Stack
+## MVP and current direction
 
-Backend
-- Python 3.11+
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Alembic
-- Redis (job queue)
-- Docker
+Near-term goals include:
 
-CLI
-- Typer
+1. AWS cost signals and FinOps-style findings (LLM-assisted when configured)
+2. AWS posture ingestion (Security Hub, Config rule compliance summaries)
+3. Kubernetes audit ingestion (Polaris / CIS-oriented kube-bench JSON)
+4. API and CLI access to scans and findings
+5. Background processing via Redis/RQ workers
 
-AI Layer
-- OpenAI or Anthropic API
+Example FinOps-style outcomes (illustrative):
 
-Infrastructure Signals
-- AWS Cost Explorer
-- AWS CUR (Cost Usage Reports)
-- EKS API
-- EC2 API
-- CloudWatch metrics
+- Reduce EKS node shape or pool → estimated savings  
+- Remove unused storage or idle network resources  
+- Improve utilization (e.g. spot, rightsizing)
+
+Example posture outcomes:
+
+- Prioritized Security Hub findings with resource linkage  
+- Non-compliant Config rules surfaced as tracked findings  
+- Polaris / kube-bench gaps grouped by severity and framework  
+
+---
+
+## Technology stack
+
+**Backend:** Python 3.11+, FastAPI, PostgreSQL, SQLAlchemy, Alembic, Redis (RQ), Docker  
+
+**CLI:** Typer  
+
+**AI:** OpenAI-compatible APIs (cloud or self-hosted vLLM, etc.)  
+
+**Infrastructure signals (directional):**
+
+- AWS Cost Explorer, CUR (cost usage reports)  
+- EKS, EC2, CloudWatch  
+- AWS Security Hub, AWS Config  
+- Kubernetes: Polaris, kube-bench (JSON ingestion); optional in-cluster or kubeconfig-based runners  
 
 ---
 
 ## Architecture
 
-CloudOpt consists of three main components:
+Components:
 
-API Server
-Handles authentication, APIs, and orchestration.
+1. **API server** — REST API, orchestration, enqueue scan jobs  
+2. **Worker** — Consumes RQ jobs; routes by `scan_kind` (FinOps agent, AWS collectors, K8s JSON ingest, or combined)  
+3. **CLI** — Trigger flows and print results against the API  
 
-Worker Service
-Processes analysis jobs and generates cost findings.
+High-level flow:
 
-CLI Tool
-Allows engineers to run scans locally or trigger analysis jobs.
-
-Flow:
-
-AWS Data Sources
-↓
-Ingestion Service
-↓
-Normalized Cost Database
-↓
-Analysis Engine
-↓
-AI Recommendation Engine
-↓
-Findings API + CLI
+```text
+AWS / K8s inputs (APIs, reports)
+        ↓
+    Collectors & normalization
+        ↓
+    Postgres (scans, findings, optional RAG chunks)
+        ↓
+Findings API + CLI  (+ optional LLM enrichment)
+```
 
 ---
 
-## Initial Features
+## Features (initial and adjacent)
 
-Cost Spike Analysis
-Detect and explain sudden increases in AWS spend.
+**Cost and usage**
 
-Kubernetes Cost Analysis
-Analyze:
-- pod resource requests vs usage
-- node utilization
-- Karpenter node pools
+- Cost spike analysis (directional)  
+- Kubernetes cost angles: requests vs usage, node utilization, autoscaling/Karpenter-friendly themes  
 
-Infrastructure Waste Detection
-Identify:
+**Waste and efficiency**
 
-- unattached EBS volumes
-- idle load balancers
-- orphaned ENIs
-- unused snapshots
+- Unattached volumes, idle load balancers, orphaned ENIs, unused snapshots (as data becomes available)  
 
-Right-Sizing Recommendations
-Example:
+**Posture and compliance**
 
-Change instance:
-m6i.2xlarge → m6i.xlarge
+- Security Hub findings (normalized)  
+- Config rule non-compliance summaries  
+- Polaris / kube-bench JSON → findings  
 
-Estimated savings:
-$2,134/month
+**Right-sizing (FinOps)**
+
+- Instance / capacity recommendations with estimated savings where modeled  
 
 ---
 
-## Repository Structure
+## Repository structure
 
+```text
 cloudopt/
   apps/
     api/
@@ -130,59 +107,32 @@ cloudopt/
   packages/
     core/
     aws/
+    cloud_audit/
     ai/
     finops/
   docs/
   infra/
   tests/
+```
 
 ---
 
 ## CLI
 
-CLI command:
-
-cloudopt scan
-
-Example output:
-
-CloudOpt Scan Results
-
-Cluster: production
-
-Recommendation:
-Reduce node size from m6i.2xlarge → m6i.xlarge
-
-Savings:
-$2,134/month
+- `cloudopt scan` — FinOps-oriented entrypoint (evolving; may call API in full deployments)  
+- `cloudopt audit aws` — AWS posture scan via API  
+- `cloudopt audit k8s --polaris-json …` / `--kube-bench-json …` — Kubernetes audits via API  
 
 ---
 
-## Future Features
+## Future features
 
-Terraform PR automation
-
-Example:
-
-CloudOpt generates:
-
-terraform diff
-
-removes unused EBS volumes
-reduces node sizes
-changes autoscaling settings
-
-Then opens a GitHub pull request.
+- **Trusted Advisor** and additional AWS sources (Inspector, IAM Access Analyzer, OSS scanners such as Prowler) behind the same normalization layer  
+- **Terraform / PR automation** — generated diffs and GitHub pull requests for approved remediations  
+- **Web UI** — dashboards by pillar, framework, and trend across scans  
 
 ---
 
-## Product Vision
+## Product vision
 
-CloudOpt.dev should become an AI-powered autonomous FinOps engineer.
-
-Instead of dashboards, it should:
-
-Detect cost issues
-Explain root causes
-Recommend optimizations
-Optionally implement fixes
+CloudOpt should behave like a **capable cloud teammate**: surface cost and risk, explain context with evidence, recommend concrete changes, and optionally implement safe fixes—with clear tenant boundaries and auditability rather than opaque model memory alone.

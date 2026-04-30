@@ -5,12 +5,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cloudopt"
 version = "0.3.0"
-description = "AI-powered FinOps platform for AWS and Kubernetes cost optimization"
+description = "AI-assisted cloud platform for AWS and Kubernetes: FinOps, posture audits, and Kubernetes best-practice checks"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "CloudOpt" }]
-keywords = ["finops", "aws", "kubernetes", "cost-optimization"]
+keywords = [
+    "finops",
+    "aws",
+    "kubernetes",
+    "cost-optimization",
+    "security",
+    "compliance",
+    "devops",
+    "sre",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
