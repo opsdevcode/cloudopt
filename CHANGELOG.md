@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v0.3.0 (2026-04-30)
+
+### Bug Fixes
+
+- **ai**: Satisfy ruff format and mypy for Phase C tools
+  ([`eef27b8`](https://github.com/opsdevcode/cloudopt/commit/eef27b8005d96722047d9438fd0faf731c154ce0))
+
+### Features
+
+- **ai**: Phase C FinOps agent tool loop
+  ([`0612b32`](https://github.com/opsdevcode/cloudopt/commit/0612b3216bd019c0ffebd1c59032f091d7e4a17d))
+
+
 ## v0.2.0 (2026-04-30)
 
 ### Bug Fixes
