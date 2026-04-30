@@ -39,6 +39,21 @@ def _print_findings_text(rows: list[dict[str, Any]]) -> None:
         typer.echo("")
 
 
+def _emit_audit_json(
+    client: httpx.Client,
+    base: str,
+    scan_id: str,
+    done: dict[str, Any],
+    findings: list[dict[str, Any]],
+) -> None:
+    """Emit scan + summary + findings as one JSON document (--output json)."""
+    summary = None
+    sr = client.get(f"{base}/api/v1/scans/{scan_id}/summary")
+    if sr.is_success:
+        summary = sr.json()
+    typer.echo(json.dumps({"scan": done, "summary": summary, "findings": findings}, indent=2))
+
+
 @audit_app.command("aws")
 def audit_aws(
     tenant: str = typer.Option("default", "--tenant", "-t"),
@@ -67,14 +82,9 @@ def audit_aws(
         fr.raise_for_status()
         findings = fr.json()
 
-        if output != "json":
-            sr = client.get(f"{base}/api/v1/scans/{scan_id}/summary")
-            if sr.is_success:
-                typer.echo(json.dumps(sr.json(), indent=2))
-
-    if output == "json":
-        typer.echo(json.dumps({"scan": done, "findings": findings}, indent=2))
-        return
+        if output == "json":
+            _emit_audit_json(client, base, scan_id, done, findings)
+            return
 
     _print_findings_text(findings)
 
@@ -130,13 +140,8 @@ def audit_k8s(
         fr.raise_for_status()
         findings = fr.json()
 
-        if output != "json":
-            sr = client.get(f"{base}/api/v1/scans/{scan_id}/summary")
-            if sr.is_success:
-                typer.echo(json.dumps(sr.json(), indent=2))
-
-    if output == "json":
-        typer.echo(json.dumps({"scan": done, "findings": findings}, indent=2))
-        return
+        if output == "json":
+            _emit_audit_json(client, base, scan_id, done, findings)
+            return
 
     _print_findings_text(findings)
