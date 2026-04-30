@@ -78,7 +78,11 @@ def test_kube_bench_controls():
                 "id": "3.1",
                 "node_type": "master",
                 "tests": [
-                    {"test_number": "3.1.1", "desc": "Ensure dangerous plugin disabled", "status": "FAIL"}
+                    {
+                        "test_number": "3.1.1",
+                        "desc": "Ensure dangerous plugin disabled",
+                        "status": "FAIL",
+                    }
                 ],
             }
         ]

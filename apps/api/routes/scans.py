@@ -137,8 +137,10 @@ async def get_scan_summary(
     )
     total_stmt = select(func.count(Finding.id)).where(Finding.scan_id == scan_id)
 
-    by_severity = dict((await db.execute(sev_stmt)).all())
-    by_finding_kind = dict((await db.execute(kind_stmt)).all())
+    sev_rows = (await db.execute(sev_stmt)).all()
+    kind_rows = (await db.execute(kind_stmt)).all()
+    by_severity: dict[str, int] = {str(k): int(v) for k, v in sev_rows}
+    by_finding_kind: dict[str, int] = {str(k): int(v) for k, v in kind_rows}
     total = (await db.execute(total_stmt)).scalar_one()
 
     return ScanSummaryResponse(
@@ -146,8 +148,8 @@ async def get_scan_summary(
         scan_kind=scan.scan_kind,
         status=scan.status,
         findings_total=int(total),
-        by_severity={str(k): int(v) for k, v in by_severity.items()},
-        by_finding_kind={str(k): int(v) for k, v in by_finding_kind.items()},
+        by_severity=by_severity,
+        by_finding_kind=by_finding_kind,
     )
 
 

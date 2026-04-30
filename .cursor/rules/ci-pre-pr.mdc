@@ -1,0 +1,29 @@
+---
+description: Run the same Python checks as GitHub CI before pushing or opening a PR
+alwaysApply: true
+---
+
+# Pre-push and pre-PR checks (match `.github/workflows/ci.yml`)
+
+Before **`git push`** that will update a PR, or before **`gh pr create`**, run these from the repository root with dev dependencies installed (`pip install -e ".[dev]"`). Fix all failures before pushing.
+
+## Required commands
+
+These mirror the **CI** workflow jobs **lint** and **mypy** (Python 3.11 project):
+
+```bash
+ruff check .
+ruff format --check .
+mypy apps packages
+```
+
+- If `ruff format --check` fails, apply formatting with `ruff format .` (or format only touched paths), then re-run the checks.
+- **`mypy`** scope is exactly `apps packages` (not `tests/` unless CI changes).
+
+## Tests (recommended before PR)
+
+When CI-relevant Python paths changed, run **`pytest`** locally. CI uses Postgres + migrations; align with `ci.yml` **test** job when possible (`alembic upgrade head` then `pytest`).
+
+## Do not skip
+
+Do not open or update a PR relying only on “should pass in CI”—execute **ruff** and **mypy** (andtests when practical) and resolve errors first.

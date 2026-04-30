@@ -63,7 +63,9 @@ def dispatch_scan(scan_id: str) -> dict[str, Any]:
         raise
 
 
-def persist_audit_findings(session: Session, scan_id: str, items: list[NormalizedAuditFinding]) -> int:
+def persist_audit_findings(
+    session: Session, scan_id: str, items: list[NormalizedAuditFinding]
+) -> int:
     """Insert normalized audit rows (no FinOps RAG embedding)."""
     n = 0
     for item in items:
@@ -95,9 +97,7 @@ def run_aws_audit_scan(scan_id: str, *, finalize_scan: bool = True) -> dict[str,
     sh_raw, sh_err = collect_security_hub_findings(
         max_findings=settings.audit_security_hub_max_findings
     )
-    cfg_raw, cfg_err = collect_config_non_compliant_rules(
-        max_rules=settings.audit_config_max_rules
-    )
+    cfg_raw, cfg_err = collect_config_non_compliant_rules(max_rules=settings.audit_config_max_rules)
     combined = list(sh_raw) + list(cfg_raw)
 
     with sync_session_scope() as session:

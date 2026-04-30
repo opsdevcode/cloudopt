@@ -47,7 +47,9 @@ def config_rule_to_normalized(rule: dict[str, Any]) -> NormalizedAuditFinding | 
     )
 
 
-def collect_config_non_compliant_rules(*, max_rules: int = 200) -> tuple[list[NormalizedAuditFinding], str | None]:
+def collect_config_non_compliant_rules(
+    *, max_rules: int = 200
+) -> tuple[list[NormalizedAuditFinding], str | None]:
     """Paginate Config compliance summaries; returns (findings, error_message)."""
     out: list[NormalizedAuditFinding] = []
     try:

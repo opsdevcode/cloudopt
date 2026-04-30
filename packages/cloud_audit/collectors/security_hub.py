@@ -39,14 +39,14 @@ def security_hub_record_to_normalized(raw: dict[str, Any]) -> NormalizedAuditFin
 
     sev = raw.get("Severity") or {}
     severity_label = sev.get("Label") if isinstance(sev, dict) else None
-    severity = security_hub_severity(
-        str(severity_label) if severity_label is not None else None
-    )
+    severity = security_hub_severity(str(severity_label) if severity_label is not None else None)
 
-    compliance = raw.get("Compliance") if isinstance(raw.get("Compliance"), dict) else {}
+    comp_raw = raw.get("Compliance")
+    compliance: dict[str, Any] = comp_raw if isinstance(comp_raw, dict) else {}
     audit_status = compliance_status_to_audit(compliance.get("Status"))
     if audit_status is None:
-        wf = raw.get("Workflow") if isinstance(raw.get("Workflow"), dict) else {}
+        wf_raw = raw.get("Workflow")
+        wf: dict[str, Any] = wf_raw if isinstance(wf_raw, dict) else {}
         if str(wf.get("Status", "")).upper() in ("NEW", "NOTIFIED"):
             audit_status = "fail"
 
@@ -90,7 +90,9 @@ def security_hub_record_to_normalized(raw: dict[str, Any]) -> NormalizedAuditFin
     )
 
 
-def collect_security_hub_findings(*, max_findings: int = 500) -> tuple[list[NormalizedAuditFinding], str | None]:
+def collect_security_hub_findings(
+    *, max_findings: int = 500
+) -> tuple[list[NormalizedAuditFinding], str | None]:
     """
     List active Security Hub findings (best-effort pagination).
 

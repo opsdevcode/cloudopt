@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import typer
@@ -20,9 +20,9 @@ def _wait_scan(client: httpx.Client, base: str, scan_id: str, timeout_s: int) ->
     while time.monotonic() < deadline:
         r = client.get(f"{base}/api/v1/scans/{scan_id}")
         r.raise_for_status()
-        data = r.json()
-        if data.get("status") in ("completed", "failed"):
-            return data
+        payload = r.json()
+        if isinstance(payload, dict) and payload.get("status") in ("completed", "failed"):
+            return cast(dict[str, Any], payload)
         time.sleep(2)
     raise typer.BadParameter(f"Scan {scan_id} did not finish within {timeout_s}s")
 
