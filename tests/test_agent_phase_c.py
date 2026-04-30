@@ -29,6 +29,7 @@ def test_extract_json_object_brace_slice() -> None:
 def test_run_finops_agent_tool_loop_then_json(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("packages.ai.agent.retrieve_context_sync", lambda *a, **k: [])
     monkeypatch.setattr("packages.ai.agent.format_rag_block", lambda _chunks: "")
+
     def stub_execute(
         _name: str,
         _args: dict,
@@ -51,9 +52,7 @@ def test_run_finops_agent_tool_loop_then_json(monkeypatch: pytest.MonkeyPatch) -
     llm.chat_round.side_effect = [
         ChatRoundResult(
             content=None,
-            tool_calls=(
-                ToolCallSpec(id="call_1", name="get_scan_snapshot", arguments="{}"),
-            ),
+            tool_calls=(ToolCallSpec(id="call_1", name="get_scan_snapshot", arguments="{}"),),
             finish_reason="tool_calls",
         ),
         ChatRoundResult(

@@ -141,15 +141,10 @@ def _tool_get_scan_snapshot(
     args: dict[str, Any],
 ) -> dict[str, Any]:
     sid = args.get("scan_id")
-    if isinstance(sid, str) and sid.strip():
-        resolved = sid.strip()
-    else:
-        resolved = scan_id
+    resolved: str | None = sid.strip() if isinstance(sid, str) and sid.strip() else scan_id
     if not resolved:
         return {"error": "scan_id required (from context or arguments)"}
-    scan = session.scalar(
-        select(Scan).where(Scan.id == resolved, Scan.tenant_id == tenant_id)
-    )
+    scan = session.scalar(select(Scan).where(Scan.id == resolved, Scan.tenant_id == tenant_id))
     if not scan:
         return {"error": "scan not found for tenant"}
     findings = session.scalars(select(Finding).where(Finding.scan_id == resolved)).all()
@@ -190,9 +185,7 @@ def _tool_fetch_cost_metadata(
 
     meta: dict[str, Any] = {}
     if scan_id:
-        scan = session.scalar(
-            select(Scan).where(Scan.id == scan_id, Scan.tenant_id == tenant_id)
-        )
+        scan = session.scalar(select(Scan).where(Scan.id == scan_id, Scan.tenant_id == tenant_id))
         if scan and scan.metadata_:
             meta = dict(scan.metadata_)
     cost_hints = meta.get("cost_hints") or meta.get("cost_explorer") or meta.get("cur")
@@ -218,9 +211,7 @@ def _tool_explain_cost_spike(
     if isinstance(focus, str) and focus.strip():
         raw["focus"] = focus.strip()
     if scan_id:
-        scan = session.scalar(
-            select(Scan).where(Scan.id == scan_id, Scan.tenant_id == tenant_id)
-        )
+        scan = session.scalar(select(Scan).where(Scan.id == scan_id, Scan.tenant_id == tenant_id))
         if scan and scan.metadata_:
             raw["scan_metadata"] = scan.metadata_
     return analyze_cost_spike(raw)
@@ -237,7 +228,9 @@ def execute_finops_tool(
     """Run a whitelisted tool and return JSON text for the assistant."""
     handlers: dict[str, Any] = {
         "query_recent_findings": lambda: _tool_query_recent_findings(session, tenant_id, arguments),
-        "get_scan_snapshot": lambda: _tool_get_scan_snapshot(session, tenant_id, scan_id, arguments),
+        "get_scan_snapshot": lambda: _tool_get_scan_snapshot(
+            session, tenant_id, scan_id, arguments
+        ),
         "fetch_cost_metadata": lambda: _tool_fetch_cost_metadata(
             session, tenant_id, scan_id, arguments
         ),
