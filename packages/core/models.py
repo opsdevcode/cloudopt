@@ -4,10 +4,14 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, JSON
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from packages.core.database import Base
+
+# Must match Alembic revision that creates rag_chunks.embedding and CLOUDOPT_EMBEDDING_DIMENSIONS default.
+_EMBEDDING_DIM = 1024
 
 
 def uuid_str() -> str:
@@ -21,6 +25,7 @@ class Scan(Base):
     __tablename__ = "scans"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_str)
+    tenant_id: Mapped[str] = mapped_column(String(255), nullable=False, default="default")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
     cluster_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -57,3 +62,17 @@ class Finding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     scan: Mapped["Scan"] = relationship("Scan", back_populates="findings")
+
+
+class RagChunk(Base):
+    """Embedded text chunk for tenant-scoped RAG (findings, scan summaries, CUR snippets)."""
+
+    __tablename__ = "rag_chunks"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_str)
+    tenant_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    source_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(_EMBEDDING_DIM), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)

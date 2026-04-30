@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.pool import NullPool
 
 from packages.core.database import Base
-from packages.core.models import Scan, Finding  # noqa: F401 - register models
+from packages.core.models import Finding, RagChunk, Scan  # noqa: F401 - register models
 from packages.core.config import get_settings
 
 config = context.config

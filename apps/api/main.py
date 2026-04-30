@@ -4,8 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from apps.api.routes import health, scans, findings
-from packages.core.database import get_db
+from apps.api.routes import findings, health, scans
 
 
 @asynccontextmanager

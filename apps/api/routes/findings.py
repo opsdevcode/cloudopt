@@ -1,9 +1,9 @@
 """Findings API."""
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, ConfigDict
 
 from packages.core.database import get_db
 from packages.core.models import Finding
