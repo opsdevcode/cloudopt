@@ -2,6 +2,32 @@
 
 <!-- version list -->
 
+## v0.4.0 (2026-04-30)
+
+### Bug Fixes
+
+- **ci**: Ruff format and mypy for lint/type-check jobs
+  ([`db8b94e`](https://github.com/opsdevcode/cloudopt/commit/db8b94e19031bce5dfc738eba4fbb8640755802d))
+
+- **cli**: Emit scan summary only with audit --output json
+  ([`60def4c`](https://github.com/opsdevcode/cloudopt/commit/60def4cfde53980fe514ba2215b2b5e5533c0488))
+
+### Chores
+
+- **license**: Adopt BSD 3-Clause
+  ([`05ab5de`](https://github.com/opsdevcode/cloudopt/commit/05ab5de42257ad730a31f35a94035d331a0f798e))
+
+### Documentation
+
+- Align README and specs with FinOps + posture platform
+  ([`df01f9d`](https://github.com/opsdevcode/cloudopt/commit/df01f9d78d195b512de2acba950b55451110a9aa))
+
+### Features
+
+- **api**: Add AWS and Kubernetes audit scans
+  ([`f2e67d0`](https://github.com/opsdevcode/cloudopt/commit/f2e67d01cc56029e92e129cd7952e29c6a8dcad9))
+
+
 ## v0.3.0 (2026-04-30)
 
 ### Bug Fixes

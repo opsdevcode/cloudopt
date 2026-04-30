@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloudopt"
-version = "0.3.0"
+version = "0.4.0"
 description = "AI-assisted cloud platform for AWS and Kubernetes: FinOps, posture audits, and Kubernetes best-practice checks"
 readme = "README.md"
 requires-python = ">=3.11"
