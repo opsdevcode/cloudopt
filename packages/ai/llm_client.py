@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 from openai import AsyncOpenAI, OpenAI
 
@@ -67,15 +67,15 @@ class LLMClient:
     ) -> dict[str, Any]:
         """Chat completion; parse assistant content as JSON object."""
         resp = self._client.chat.completions.create(
-            model=self._chat_model,
-            messages=messages,
+            model=cast(Any, self._chat_model),
+            messages=cast(Any, messages),
             temperature=temperature,
-            response_format={"type": "json_object"},
+            response_format=cast(Any, {"type": "json_object"}),
         )
         content = resp.choices[0].message.content
         if not content:
             return {}
-        return json.loads(content)
+        return cast(dict[str, Any], json.loads(content))
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Return embedding vectors (dimension must match DB / settings)."""
@@ -124,15 +124,15 @@ class AsyncLLMClient:
         temperature: float = 0.2,
     ) -> dict[str, Any]:
         resp = await self._client.chat.completions.create(
-            model=self._chat_model,
-            messages=messages,
+            model=cast(Any, self._chat_model),
+            messages=cast(Any, messages),
             temperature=temperature,
-            response_format={"type": "json_object"},
+            response_format=cast(Any, {"type": "json_object"}),
         )
         content = resp.choices[0].message.content
         if not content:
             return {}
-        return json.loads(content)
+        return cast(dict[str, Any], json.loads(content))
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:

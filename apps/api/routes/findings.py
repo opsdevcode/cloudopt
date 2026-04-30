@@ -71,6 +71,7 @@ async def get_finding(
     finding = result.scalar_one_or_none()
     if not finding:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Finding not found")
     return FindingResponse(
         id=finding.id,

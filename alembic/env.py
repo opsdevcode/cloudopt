@@ -2,14 +2,14 @@
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection
 from sqlalchemy.pool import NullPool
 
+from alembic import context
+from packages.core.config import get_settings
 from packages.core.database import Base
 from packages.core.models import Finding, RagChunk, Scan  # noqa: F401 - register models
-from packages.core.config import get_settings
 
 config = context.config
 if config.config_file_name is not None:

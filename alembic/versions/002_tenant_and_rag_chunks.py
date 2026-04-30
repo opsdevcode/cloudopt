@@ -5,16 +5,18 @@ Revises: 001
 Create Date: 2026-04-23
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from pgvector.sqlalchemy import Vector
 
+from alembic import op
+
 revision: str = "002"
-down_revision: Union[str, None] = "001"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "001"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 # Must stay aligned with packages.core.models.RagChunk and CLOUDOPT_EMBEDDING_DIMENSIONS default.
 _EMBEDDING_DIM = 1024

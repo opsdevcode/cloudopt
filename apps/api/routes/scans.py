@@ -64,6 +64,7 @@ async def get_scan(
     scan = result.scalar_one_or_none()
     if not scan:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Scan not found")
     return ScanResponse(
         id=scan.id,
@@ -82,9 +83,7 @@ async def list_scans(
     """List recent scans."""
     from sqlalchemy import select
 
-    result = await db.execute(
-        select(Scan).order_by(Scan.created_at.desc()).limit(limit)
-    )
+    result = await db.execute(select(Scan).order_by(Scan.created_at.desc()).limit(limit))
     scans = result.scalars().all()
     return [
         ScanResponse(

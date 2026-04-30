@@ -1,6 +1,5 @@
 """cloudopt scan — run cost optimization scan."""
 
-
 import typer
 
 scan_app = typer.Typer(help="Run a cost optimization scan.")
@@ -36,9 +35,7 @@ def _run_scan(cluster: str, output: str) -> None:
     """Execute scan and print results. Placeholder: stub output for MVP."""
     # Placeholder: in full implementation this would call API or run analysis locally
     if output == "json":
-        typer.echo(
-            f'{{"cluster": "{cluster}", "findings": [], "total_savings_monthly": 0}}'
-        )
+        typer.echo(f'{{"cluster": "{cluster}", "findings": [], "total_savings_monthly": 0}}')
         return
 
     typer.echo("")

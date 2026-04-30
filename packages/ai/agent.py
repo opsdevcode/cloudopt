@@ -33,7 +33,11 @@ def run_finops_agent_sync(
         }
 
     rag_block = ""
-    q = rag_query or context.get("rag_query") or str(context.get("cluster_name") or "cost optimization")
+    q = (
+        rag_query
+        or context.get("rag_query")
+        or str(context.get("cluster_name") or "cost optimization")
+    )
     chunks = retrieve_context_sync(session, tenant_id, str(q), client=llm)
     rag_block = format_rag_block(chunks)
 

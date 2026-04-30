@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
 
-    @field_validator("llm_base_url", "llm_api_key", "openai_api_key", "anthropic_api_key", mode="before")
+    @field_validator(
+        "llm_base_url", "llm_api_key", "openai_api_key", "anthropic_api_key", mode="before"
+    )
     @classmethod
     def _empty_str_to_none(cls, v: object) -> object:
         if v == "":
