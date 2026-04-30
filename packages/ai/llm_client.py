@@ -3,11 +3,30 @@
 from __future__ import annotations
 
 import json
-from typing import Any, cast
+from dataclasses import dataclass
+from typing import Any, Literal, cast
 
 from openai import AsyncOpenAI, OpenAI
 
 from packages.core.config import Settings, get_settings
+
+
+@dataclass(frozen=True)
+class ToolCallSpec:
+    """OpenAI-style tool invocation from one assistant turn."""
+
+    id: str
+    name: str
+    arguments: str
+
+
+@dataclass(frozen=True)
+class ChatRoundResult:
+    """One chat completion turn (optional tool calls)."""
+
+    content: str | None
+    tool_calls: tuple[ToolCallSpec, ...]
+    finish_reason: str | None
 
 
 def resolve_openai_compatible_settings(settings: Settings | None = None) -> tuple[str, str] | None:
@@ -77,6 +96,54 @@ class LLMClient:
             return {}
         return cast(dict[str, Any], json.loads(content))
 
+    def chat_round(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: Literal["auto", "none"] | None = "auto",
+        temperature: float = 0.2,
+        response_format: dict[str, str] | None = None,
+    ) -> ChatRoundResult:
+        """
+        Single completion turn; may return tool calls for a ReAct-style loop.
+
+        Pass ``tool_choice=\"none\"`` to force a plain-text (e.g. JSON) reply when tools
+        are still listed for providers that require tool schemas in history.
+        """
+        kwargs: dict[str, Any] = {
+            "model": cast(Any, self._chat_model),
+            "messages": cast(Any, messages),
+            "temperature": temperature,
+        }
+        if tools is not None:
+            kwargs["tools"] = cast(Any, tools)
+            if tool_choice is not None:
+                kwargs["tool_choice"] = tool_choice
+        if response_format is not None:
+            kwargs["response_format"] = cast(Any, response_format)
+        resp = self._client.chat.completions.create(**kwargs)
+        msg = resp.choices[0].message
+        finish = getattr(resp.choices[0], "finish_reason", None)
+        raw_calls = getattr(msg, "tool_calls", None) or []
+        specs: list[ToolCallSpec] = []
+        for tc in raw_calls:
+            fn = getattr(tc, "function", None)
+            if fn is None:
+                continue
+            specs.append(
+                ToolCallSpec(
+                    id=str(getattr(tc, "id", "") or ""),
+                    name=str(getattr(fn, "name", "") or ""),
+                    arguments=str(getattr(fn, "arguments", None) or "{}"),
+                )
+            )
+        return ChatRoundResult(
+            content=msg.content,
+            tool_calls=tuple(specs),
+            finish_reason=str(finish) if finish is not None else None,
+        )
+
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Return embedding vectors (dimension must match DB / settings)."""
         if not texts:
@@ -133,6 +200,48 @@ class AsyncLLMClient:
         if not content:
             return {}
         return cast(dict[str, Any], json.loads(content))
+
+    async def chat_round(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: Literal["auto", "none"] | None = "auto",
+        temperature: float = 0.2,
+        response_format: dict[str, str] | None = None,
+    ) -> ChatRoundResult:
+        kwargs: dict[str, Any] = {
+            "model": cast(Any, self._chat_model),
+            "messages": cast(Any, messages),
+            "temperature": temperature,
+        }
+        if tools is not None:
+            kwargs["tools"] = cast(Any, tools)
+            if tool_choice is not None:
+                kwargs["tool_choice"] = tool_choice
+        if response_format is not None:
+            kwargs["response_format"] = cast(Any, response_format)
+        resp = await self._client.chat.completions.create(**kwargs)
+        msg = resp.choices[0].message
+        finish = getattr(resp.choices[0], "finish_reason", None)
+        raw_calls = getattr(msg, "tool_calls", None) or []
+        specs: list[ToolCallSpec] = []
+        for tc in raw_calls:
+            fn = getattr(tc, "function", None)
+            if fn is None:
+                continue
+            specs.append(
+                ToolCallSpec(
+                    id=str(getattr(tc, "id", "") or ""),
+                    name=str(getattr(fn, "name", "") or ""),
+                    arguments=str(getattr(fn, "arguments", None) or "{}"),
+                )
+            )
+        return ChatRoundResult(
+            content=msg.content,
+            tool_calls=tuple(specs),
+            finish_reason=str(finish) if finish is not None else None,
+        )
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
