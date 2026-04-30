@@ -165,4 +165,4 @@ If `main` is protected (e.g. "Require a pull request"), the default `GITHUB_TOKE
 
 ## License
 
-MIT
+CloudOpt is distributed under the [BSD 3-Clause License](LICENSE).

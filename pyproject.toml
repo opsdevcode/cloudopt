@@ -8,7 +8,7 @@ version = "0.3.0"
 description = "AI-assisted cloud platform for AWS and Kubernetes: FinOps, posture audits, and Kubernetes best-practice checks"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [{ name = "CloudOpt" }]
 keywords = [
     "finops",
@@ -22,6 +22,7 @@ keywords = [
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
