@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "name": "minimal_valid",
+      "expected_summary_contains": "EKS",
+      "llm_output": {
+        "summary": "Review EKS node utilization and unattached volumes.",
+        "findings": [
+          {
+            "title": "Rightsize EKS worker nodes",
+            "category": "kubernetes",
+            "severity": "medium",
+            "estimated_savings_monthly": 250.0,
+            "description": "Average CPU utilization below 35% on several nodes.",
+            "recommendation": "Reduce instance sizes or consolidate workloads.",
+            "resource_type": "eks:cluster",
+            "resource_id": "prod-use1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty_findings_ok",
+      "llm_output": {
+        "summary": "Insufficient billing context to produce findings.",
+        "findings": []
+      }
+    }
+  ]
+}

@@ -1,7 +1,5 @@
 """cloudopt scan — run cost optimization scan."""
 
-from typing import Optional
-
 import typer
 
 scan_app = typer.Typer(help="Run a cost optimization scan.")
@@ -10,13 +8,13 @@ scan_app = typer.Typer(help="Run a cost optimization scan.")
 @scan_app.callback(invoke_without_command=True)
 def scan_cmd(
     ctx: typer.Context,
-    cluster: Optional[str] = typer.Option(
+    cluster: str | None = typer.Option(
         None,
         "--cluster",
         "-c",
         help="Kubernetes cluster name to analyze (e.g. production).",
     ),
-    output: Optional[str] = typer.Option(
+    output: str | None = typer.Option(
         None,
         "--output",
         "-o",
@@ -37,10 +35,7 @@ def _run_scan(cluster: str, output: str) -> None:
     """Execute scan and print results. Placeholder: stub output for MVP."""
     # Placeholder: in full implementation this would call API or run analysis locally
     if output == "json":
-        typer.echo(
-            '{"cluster": "%s", "findings": [], "total_savings_monthly": 0}'
-            % cluster
-        )
+        typer.echo(f'{{"cluster": "{cluster}", "findings": [], "total_savings_monthly": 0}}')
         return
 
     typer.echo("")

@@ -1,9 +1,9 @@
 """Findings API."""
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, ConfigDict
 
 from packages.core.database import get_db
 from packages.core.models import Finding
@@ -71,6 +71,7 @@ async def get_finding(
     finding = result.scalar_one_or_none()
     if not finding:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Finding not found")
     return FindingResponse(
         id=finding.id,
