@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.5.0 (2026-05-01)
+
+### Features
+
+- **web**: Add Next.js console with OpsDevCode styling
+  ([`0a7d986`](https://github.com/opsdevcode/cloudopt/commit/0a7d98659152af92842da5a2bdd0cec148896194))
+
+
 ## v0.4.0 (2026-04-30)
 
 ### Bug Fixes
