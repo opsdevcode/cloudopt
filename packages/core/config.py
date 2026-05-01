@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     debug: bool = False
+    # Comma-separated browser origins for CORS (e.g. Next.js dev). Empty = no CORS middleware.
+    cors_origins: str = ""
 
     # Database
     database_url: str = "postgresql+asyncpg://cloudopt:cloudopt@localhost:5432/cloudopt"

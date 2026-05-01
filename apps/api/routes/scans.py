@@ -40,6 +40,24 @@ class ScanResponse(BaseModel):
     cluster_name: str | None
     metadata: dict[str, Any] | None = None
     created_at: str
+    started_at: str | None = None
+    completed_at: str | None = None
+    updated_at: str | None = None
+
+
+def _scan_to_response(scan: Scan) -> ScanResponse:
+    return ScanResponse(
+        id=scan.id,
+        tenant_id=scan.tenant_id,
+        scan_kind=scan.scan_kind,
+        status=scan.status,
+        cluster_name=scan.cluster_name,
+        metadata=scan.metadata_,
+        created_at=scan.created_at.isoformat(),
+        started_at=scan.started_at.isoformat() if scan.started_at else None,
+        completed_at=scan.completed_at.isoformat() if scan.completed_at else None,
+        updated_at=scan.updated_at.isoformat() if scan.updated_at else None,
+    )
 
 
 class ScanSummaryResponse(BaseModel):
@@ -79,15 +97,7 @@ async def create_scan(
     await db.flush()
     await db.refresh(scan)
     enqueue_dispatch_scan(scan.id)
-    return ScanResponse(
-        id=scan.id,
-        tenant_id=scan.tenant_id,
-        scan_kind=scan.scan_kind,
-        status=scan.status,
-        cluster_name=scan.cluster_name,
-        metadata=scan.metadata_,
-        created_at=scan.created_at.isoformat(),
-    )
+    return _scan_to_response(scan)
 
 
 @router.get("", response_model=list[ScanResponse])
@@ -98,18 +108,7 @@ async def list_scans(
     """List recent scans."""
     result = await db.execute(select(Scan).order_by(Scan.created_at.desc()).limit(limit))
     scans = result.scalars().all()
-    return [
-        ScanResponse(
-            id=s.id,
-            tenant_id=s.tenant_id,
-            scan_kind=s.scan_kind,
-            status=s.status,
-            cluster_name=s.cluster_name,
-            metadata=s.metadata_,
-            created_at=s.created_at.isoformat(),
-        )
-        for s in scans
-    ]
+    return [_scan_to_response(s) for s in scans]
 
 
 @router.get("/{scan_id}/summary", response_model=ScanSummaryResponse)
@@ -165,12 +164,4 @@ async def get_scan(
         from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Scan not found")
-    return ScanResponse(
-        id=scan.id,
-        tenant_id=scan.tenant_id,
-        scan_kind=scan.scan_kind,
-        status=scan.status,
-        cluster_name=scan.cluster_name,
-        metadata=scan.metadata_,
-        created_at=scan.created_at.isoformat(),
-    )
+    return _scan_to_response(scan)

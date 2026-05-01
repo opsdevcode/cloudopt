@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens aligned with https://opsdevco.de/ (OpsDevCode marketing site).
+ * Colors and radii sourced from the site CSS bundle (see plan).
+ */
+:root {
+  color-scheme: light;
+  --color-bg: #ffffff;
+  --color-bg-elevated: #ffffff;
+  --color-bg-muted: #f6f9fc;
+  --color-text: #0a2540;
+  --color-text-secondary: #425466;
+  --color-text-muted: #8898aa;
+  --color-primary: #635bff;
+  --color-primary-hover: #7a73ff;
+  --color-primary-muted: rgba(99, 91, 255, 0.08);
+  --color-warm: #b07d3a;
+  --color-warm-soft: #d4a574;
+  --color-accent: #0a2540;
+  --color-accent-hover: #1a3a5c;
+  --color-accent-muted: rgba(10, 37, 64, 0.06);
+  --color-border: #e6ebf1;
+  --color-border-strong: #cfd7df;
+  --color-success: #0cad55;
+  --color-warning: #d97706;
+  --color-error: #cd3d64;
+  --color-info: #0073e6;
+  --shadow-sm: 0 1px 3px rgba(10, 23, 50, 0.06);
+  --shadow-md: 0 4px 14px rgba(10, 23, 50, 0.08);
+  --shadow-card: 0 2px 8px rgba(10, 23, 50, 0.04);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --ease-ui: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-ui: 0.22s;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text);
+  background: var(--color-bg-muted);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+code {
+  font-family: var(--font-mono), ui-monospace, "SF Mono", monospace;
+  font-size: 0.85em;
+  background: var(--color-bg-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}

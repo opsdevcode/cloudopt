@@ -63,5 +63,18 @@ services:
       redis:
         condition: service_healthy
 
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # Next.js server-side rewrites: proxy API from the Docker network
+      CLOUDOPT_API_ORIGIN: http://api:8000
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   cloudopt_pgdata:
