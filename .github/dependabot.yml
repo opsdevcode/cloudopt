@@ -1,6 +1,12 @@
-# Dependency updates: enable npm for apps/web after package.json and lockfile are committed.
+# Dependency updates
 version: 2
 updates:
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
