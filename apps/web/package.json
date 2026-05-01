@@ -16,7 +16,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.100.6",
+    "@tanstack/react-query": "^5.100.7",
     "next": "^15.5.15",
     "openapi-fetch": "^0.17.0",
     "react": "^19.0.0",
