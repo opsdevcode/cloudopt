@@ -60,6 +60,69 @@ jobs:
         if: steps.filter.outputs.security != 'true' && github.event_name != 'schedule'
         run: echo "Skipped — no relevant paths changed"
 
+  bandit:
+    name: Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            security:
+              - "apps/**"
+              - "packages/**"
+              - "alembic/**"
+              - "**/*.py"
+              - "pyproject.toml"
+              - ".github/workflows/security.yml"
+
+      - uses: actions/setup-python@v6
+        if: steps.filter.outputs.security == 'true' || github.event_name == 'schedule'
+        with:
+          python-version: "3.11"
+
+      - name: Install project + Bandit
+        if: steps.filter.outputs.security == 'true' || github.event_name == 'schedule'
+        run: |
+          python -m pip install --upgrade "pip>=26.1"
+          pip install -e ".[dev]"
+
+      - name: Bandit (high severity)
+        if: steps.filter.outputs.security == 'true' || github.event_name == 'schedule'
+        run: bandit -r apps packages alembic -c pyproject.toml -ll
+
+      - name: Skip (no relevant paths changed)
+        if: steps.filter.outputs.security != 'true' && github.event_name != 'schedule'
+        run: echo "Skipped — no relevant paths changed"
+
+  npm-audit:
+    name: npm audit (apps/web)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        if: hashFiles('apps/web/package.json') != ''
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: npm audit
+        if: hashFiles('apps/web/package.json') != ''
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Skip (no package manifest)
+        if: hashFiles('apps/web/package.json') == ''
+        run: echo "Skipped — apps/web has no package.json yet"
+
   secrets-scan:
     name: Gitleaks
     runs-on: ubuntu-latest

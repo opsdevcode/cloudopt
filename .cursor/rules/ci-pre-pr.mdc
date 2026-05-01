@@ -20,6 +20,17 @@ mypy apps packages
 - If `ruff format --check` fails, apply formatting with `ruff format .` (or format only touched paths), then re-run the checks.
 - **`mypy`** scope is exactly `apps packages` (not `tests/` unless CI changes).
 
+## Security (match `.github/workflows/security.yml`)
+
+When you change application code or dependencies, also run from the repo root (with `pip install -e ".[dev]"`):
+
+```bash
+pip-audit
+bandit -r apps packages alembic -c pyproject.toml -ll
+```
+
+Ruff’s **S** (bandit-style) rules are part of the default **lint** job; fixing `ruff check` covers many of the same patterns.
+
 ## Tests (recommended before PR)
 
 When CI-relevant Python paths changed, run **`pytest`** locally. CI uses Postgres + migrations; align with `ci.yml` **test** job when possible (`alembic upgrade head` then `pytest`).

@@ -16,8 +16,8 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # API
-    api_host: str = "0.0.0.0"
+    # API (default suits Docker/K8s; use CLOUDOPT_API_HOST=127.0.0.1 for local-only)
+    api_host: str = "0.0.0.0"  # noqa: S104  # nosec B104
     api_port: int = 8000
     debug: bool = False
     # Comma-separated browser origins for CORS (e.g. Next.js dev). Empty = no CORS middleware.
