@@ -26,7 +26,8 @@ alwaysApply: true
 ## Dependencies
 
 - Pin dependencies in `pyproject.toml` (minimum version).
-- Run `pip-audit` before adding or upgrading dependencies. When CI is added, run pip-audit on PRs.
+- Run `pip-audit` before adding or upgrading dependencies; `.github/workflows/security.yml` runs **pip-audit**, **Bandit**, and **Gitleaks** on relevant PRs (weekly on schedule).
+- Dependabot (`.github/dependabot.yml`) opens PRs for pip and GitHub Actions updates.
 - Review changelogs for security fixes when upgrading.
 
 ## Database
@@ -34,9 +35,11 @@ alwaysApply: true
 - Use SQLAlchemy ORM for all queries. No raw SQL strings with user input.
 - Do not store sensitive data (passwords, tokens, PII) unencrypted in JSONB fields. Use `api_key_hash` patterns where hashing is needed.
 
-## CI and pre-commit
+## CI and scanning
 
-- When CI is added (e.g. `.github/workflows/ci.yml`), run ruff, mypy, pytest, and pip-audit on every PR.
+- **CI** (`.github/workflows/ci.yml`): ruff (includes flake8-bandit-style **S** rules), mypy, pytest.
+- **Security workflow**: pip-audit, Bandit, optional **npm audit** for `apps/web` when `package.json` exists, Gitleaks.
+- **CodeQL** (`.github/workflows/codeql.yml`): semantic analysis for Python on PRs and `main`.
 - When pre-commit is added (`.pre-commit-config.yaml`), run it locally; use `pre-commit install`.
 
 ## Reporting vulnerabilities
