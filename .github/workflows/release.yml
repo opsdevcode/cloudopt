@@ -2,12 +2,27 @@
 # Version bump: feat -> minor; fix/perf/docs/chore/etc. -> patch; BREAKING CHANGE or feat! -> major.
 # Runs only when source or release config change.
 #
-# Protected main branch: GITHUB_TOKEN cannot push to protected branches. Add a repo secret RELEASE_PAT
-# (Personal Access Token with repo scope from a user who can bypass branch protection), and in
-# Settings → Branches → main → "Allow specified actors to bypass required pull requests" add that user.
+# -----------------------------------------------------------------------------
+# If release fails with GH013 / "Cannot update this protected ref" / "Changes must
+# be made through a pull request" / "Waiting for Code Scanning results":
+#
+# 1. Create a Classic PAT (repo scope) or Fine-grained PAT (contents write on this
+#    repo) for a bot or human account that is allowed to bypass branch/ruleset
+#    restrictions.
+# 2. Add repository secret RELEASE_PAT with that token (Settings → Secrets → Actions).
+# 3. In Settings → Rules → Rulesets (or Branch protection for main), under the rule
+#    that blocks pushes: add that same account (or a GitHub App) to **Bypass list**
+#    so it can push version commits and tags to main. Include bypass for any
+#    "Require code scanning" / status checks if those block automated pushes.
+# 4. GITHUB_TOKEN alone cannot bypass these rules; semantic-release falls back to it
+#    when RELEASE_PAT is unset.
+#
+# Re-run manually: Actions → Release → Run workflow (after fixing secrets/rules).
+# -----------------------------------------------------------------------------
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -22,8 +37,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions:
-  contents: read
+# Default deny; release job grants only what semantic-release needs.
+permissions: {}
 
 jobs:
   release:
@@ -40,7 +55,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0  # full history required for semantic-release to find commits since last tag
+          fetch-depth: 0 # full history required for semantic-release to find commits since last tag
           token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Reset to workflow SHA
