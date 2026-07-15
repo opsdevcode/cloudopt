@@ -1,0 +1,50 @@
+# Stack E2E: docker compose + Hurl (separate from fast PR pytest job).
+name: CI (E2E stack)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "e2e/**"
+      - "scripts/e2e-stack-smoke.sh"
+      - "docker-compose.yml"
+      - "Dockerfile*"
+      - "tests/test_worker_integration.py"
+      - ".github/workflows/ci-e2e.yml"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  stack-smoke:
+    name: Stack smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Install Hurl
+        run: |
+          curl -LO https://github.com/Orange-OpenSource/hurl/releases/download/6.0.0/hurl_6.0.0_amd64.deb
+          sudo dpkg -i hurl_6.0.0_amd64.deb
+
+      - name: Run stack smoke
+        env:
+  CLOUDOPT_LLM_MODE: sandbox
+  CLOUDOPT_E2E_LIVE_API: http://127.0.0.1:8000
+  RUN_PY_E2E: "1"
+        run: ./scripts/e2e-stack-smoke.sh

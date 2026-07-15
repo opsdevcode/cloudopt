@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=83", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -100,7 +100,8 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-v --tb=short"
 markers = [
-    "integration: requires Postgres/Redis (auto-skipped when CLOUDOPT_DATABASE_URL_SYNC is unreachable)",
+    "integration: requires Postgres (auto-skipped when CLOUDOPT_DATABASE_URL_SYNC is unreachable)",
+    "e2e: live stack smoke (Compose + Hurl; optional thin Python via CLOUDOPT_E2E_LIVE_API)",
 ]
 
 [tool.coverage.run]

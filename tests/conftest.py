@@ -1,8 +1,9 @@
 """Shared pytest fixtures and collection hooks.
 
-Two testing lanes:
-  * offline unit (default): sandbox LLM, no Postgres/Redis/keys/network. A bare clone runs green.
-  * integration (``@pytest.mark.integration``): needs Postgres; auto-skipped when unreachable.
+Testing lanes:
+  * offline unit (default): sandbox LLM, no Postgres/Redis/keys/network
+  * integration: Postgres-backed API tests (enqueue may be mocked)
+  * e2e: live HTTP against Compose stack (see scripts/e2e-stack-smoke.sh)
 """
 
 from __future__ import annotations

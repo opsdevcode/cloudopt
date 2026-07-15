@@ -112,3 +112,4 @@ Override `CLOUDOPT_MAIN_RULESET_ID` or `CLOUDOPT_GITHUB_REPO` if needed.
 - Merges to `main` (and matching path filters) trigger the Release workflow, which computes the next version from conventional commits, updates `pyproject.toml`, tags the release, and creates a GitHub release.
 - Maintainers can also start Release via **workflow_dispatch** after fixing `RELEASE_PAT` / bypass.
 - The Release workflow pushes using `RELEASE_PAT` when set, so it works with branch protection and Code Scanning push gates.
+- **Merged PR branches** are deleted on the remote automatically (Settings → General → Pull Requests → *Automatically delete head branches*). History lives on `main`; delete local feature branches after pull.

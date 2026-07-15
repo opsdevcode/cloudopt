@@ -1,12 +1,21 @@
 # Testing CloudOpt locally
 
-CloudOpt has two testing lanes. A fresh clone passes the offline lane with **no API keys, no GPU, no Postgres/Redis, and no network**, because the LLM layer defaults to an offline **sandbox** provider.
+CloudOpt uses a **polyglot testing pyramid**: fast Python unit/integration on every PR, stack smoke via Compose + Hurl, and optional Playwright browser checks.
+
+| Lane | Scope | Command |
+|------|--------|---------|
+| 1 — offline unit | Sandbox LLM, mocked boundaries | `make test` |
+| 2 — API integration | In-process FastAPI + Postgres (enqueue mocked) | `make test-all` (needs DB) |
+| 3 — stack e2e | Compose + Hurl (+ optional 1 Python smoke) | `make test-e2e` |
+| 4 — browser e2e (optional) | Playwright against Next.js + live API | `cd apps/web && npm run test:e2e` |
 
 ## Prerequisites
 
 ```bash
 pip install -e ".[dev]"
 ```
+
+For stack e2e, install [Hurl](https://hurl.dev/) (`brew install hurl` on macOS). The smoke script falls back to curl if Hurl is missing.
 
 ## Lane 1 — offline unit (default)
 
@@ -20,34 +29,80 @@ CLOUDOPT_LLM_MODE=sandbox pytest -m "not integration"
 ```
 
 - `tests/conftest.py` sets `CLOUDOPT_LLM_MODE=sandbox` by default.
-- Integration-marked tests are auto-skipped when Postgres is unreachable, so this stays green on a bare clone.
+- Integration tests auto-skip when Postgres is unreachable.
 
 ## Lane 2 — integration (Postgres-backed)
 
-For DB/worker-backed tests. Start services and migrate first:
+For API tests against a real database. Start services and migrate first:
 
 ```bash
-make up        # docker-compose up -d postgres redis
+make up        # docker compose up -d postgres redis
 make migrate   # alembic upgrade head
-make test-all  # full suite (integration tests included)
+pytest -m "not e2e"   # PR-equivalent gate (no stack smoke)
+make test-all  # full pytest except skipped e2e without CLOUDOPT_E2E_LIVE_API
 ```
 
-Mark DB-dependent tests with `@pytest.mark.integration` so they are skipped in the offline lane
-and run only when a database is available.
-
 Integration tests live in `tests/test_api_integration.py` (health readiness, scans, findings, metrics).
-They mock Redis/RQ enqueue so Postgres alone is sufficient locally.
+They **mock** `enqueue_dispatch_scan` so Postgres alone is sufficient.
+
+In-process worker logic (e.g. mocked AWS collectors) lives in `tests/test_worker_integration.py`
+under the `integration` marker — no RQ subprocess in pytest.
+
+## Lane 3 — stack e2e (Compose + Hurl)
+
+Proves the full path: API → Redis/RQ → worker → Postgres, plus k8s metadata ingestion.
+
+```bash
+make test-e2e
+# or:
+./scripts/e2e-stack-smoke.sh
+```
+
+This script:
+
+1. Starts `postgres`, `redis`, `api`, and `worker` via Docker Compose
+2. Runs migrations
+3. Executes `e2e/hurl/smoke.hurl` (finops + k8s paths)
+4. Optionally runs one thin Python smoke when `RUN_PY_E2E=1`
+
+Manual stack for debugging:
+
+```bash
+make stack     # postgres, redis, migrate, api, worker
+hurl --test e2e/hurl/smoke.hurl
+```
+
+CI: **CI (E2E stack)** workflow (`ci-e2e.yml`) on relevant path changes or manual dispatch.
+
+## Lane 4 — browser e2e (optional)
+
+Playwright smoke against the Next.js UI (requires API at `CLOUDOPT_API_ORIGIN`, default `http://127.0.0.1:8000`):
+
+```bash
+make stack                    # or: make dev in one terminal
+cd apps/web && npm ci
+npm run test:e2e
+```
+
+CI: **CI (Web E2E)** workflow (`ci-web-e2e.yml`) starts the Compose backend, then runs Playwright.
+
+## Component smoke (Vitest)
+
+```bash
+cd apps/web && npm test
+```
+
+Runs in **CI (Web)** on every web PR (lint + Vitest + build).
 
 ## Coverage
 
 Coverage is measured over `apps/` and `packages/` with a **40% minimum** gate (`fail_under` in `pyproject.toml`).
 
 ```bash
-make test-cov   # full suite + terminal report (needs Postgres for integration tests)
+pytest -m "not e2e" --cov=apps --cov=packages --cov-report=term-missing
 ```
 
-CI runs `pytest --cov=apps --cov=packages` with Postgres up and migrations applied, so the **full suite**
-(including integration tests) runs in the Pytest job—not the offline `-m "not integration"` lane.
+CI **Pytest** job runs `pytest -m "not e2e"` with Postgres only (no Redis/worker spawn).
 
 Ratchet `fail_under` upward as coverage improves (e.g. +5% per quarter).
 
@@ -70,4 +125,5 @@ See [docs/MODEL_GUIDANCE.md](docs/MODEL_GUIDANCE.md) for model suggestions and t
 
 ```bash
 make check   # ruff check + ruff format --check + mypy + offline tests
+pytest -m "not e2e"   # when Postgres is up
 ```
