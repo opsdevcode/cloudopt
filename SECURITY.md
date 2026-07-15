@@ -33,3 +33,7 @@ Please include:
 - We aim to provide a fix or mitigation within 30 days of confirmation.
 - We will coordinate disclosure with the reporter before making any public announcement.
 - Credit will be given to the reporter unless they prefer to remain anonymous.
+
+## Secret scanning
+
+CI runs [Gitleaks](https://github.com/gitleaks/gitleaks) on pull requests. Repo-specific allowlists live in [`.gitleaks.toml`](.gitleaks.toml). Do not commit real credentials; use `.env` (gitignored) and placeholders in `.env.example` only.

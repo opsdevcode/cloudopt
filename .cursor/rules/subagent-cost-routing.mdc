@@ -8,6 +8,7 @@ alwaysApply: true
 Conserve tokens and the main context window by delegating suitable work to subagents (Task tool) running on cheaper/faster models. Keep deep reasoning on the primary model.
 
 ## Delegate to a cheaper-model subagent
+- **Plan-mode repo research (mandatory):** when gathering concrete details so a plan matches the repo, use a read-only `explore` subagent — never run broad discovery on the primary model.
 - Codebase search / exploration / "where is X" (use `explore`).
 - Mechanical or boilerplate edits, repetitive multi-file refactors.
 - Running tests/linters/builds and summarizing output.
@@ -19,7 +20,8 @@ Conserve tokens and the main context window by delegating suitable work to subag
 - Tasks needing deep cross-file reasoning or product judgment.
 
 ## How
-- Set an explicit cheaper/faster `model:` on the Task call. Pick the cheapest *capable* model available at run time (e.g. as of 2026-07: `composer-2.5-fast`, `cursor-grok-4.5-high-fast`); do not hardcode a single model — availability changes.
+- Set an explicit cheaper/faster `model:` on the Task call. Pick the cheapest *capable* model available at run time (e.g. as of 2026-07: `composer-2.5-fast`); do not hardcode a single model — availability changes.
+- **Never use Grok** (`cursor-grok-*`) for subagent work.
 - Give the subagent a fully self-contained prompt (it lacks your context).
 - Launch independent subagents in parallel.
 - Prefer read-only subagents when no writes are needed.
