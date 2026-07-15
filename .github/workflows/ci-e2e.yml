@@ -44,7 +44,7 @@ jobs:
 
       - name: Run stack smoke
         env:
-  CLOUDOPT_LLM_MODE: sandbox
-  CLOUDOPT_E2E_LIVE_API: http://127.0.0.1:8000
-  RUN_PY_E2E: "1"
+          CLOUDOPT_LLM_MODE: sandbox
+          CLOUDOPT_E2E_LIVE_API: http://127.0.0.1:8000
+          RUN_PY_E2E: "1"
         run: ./scripts/e2e-stack-smoke.sh

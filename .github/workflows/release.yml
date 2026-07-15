@@ -52,11 +52,14 @@ jobs:
 
     steps:
       - name: Require RELEASE_PAT on protected main
-        if: ${{ secrets.RELEASE_PAT == '' }}
+        env:
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
         run: |
-          echo "::error::RELEASE_PAT is not set. Protected main requires a bypass-capable PAT to push version commits."
-          echo "See .github/BRANCH_PROTECTION_AND_RELEASE.md"
-          exit 1
+          if [ -z "${RELEASE_PAT}" ]; then
+            echo "::error::RELEASE_PAT is not set. Protected main requires a bypass-capable PAT to push version commits."
+            echo "See .github/BRANCH_PROTECTION_AND_RELEASE.md"
+            exit 1
+          fi
 
       - name: Checkout
         uses: actions/checkout@v7

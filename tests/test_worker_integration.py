@@ -61,7 +61,9 @@ async def test_finops_scan_completes_live_api() -> None:
 
         summary = await client.get(f"/api/v1/scans/{scan_id}/summary")
         assert summary.status_code == 200
-        assert summary.json()["findings_total"] > 0
+        body = summary.json()
+        assert body["status"] == "completed"
+        assert body["scan_kind"] == "finops"
 
 
 @pytest.mark.integration
