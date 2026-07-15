@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Card, GhostButton, SeverityBadge } from "@/components/ui";
 import { createCloudoptClient } from "@/lib/api";
@@ -16,25 +16,22 @@ export function FindingsView() {
   const client = useMemo(() => createCloudoptClient(), []);
   const searchParams = useSearchParams();
   const scanIdFromUrl = searchParams.get("scan_id") ?? "";
-
-  const [scanId, setScanId] = useState(scanIdFromUrl);
+  // null = follow URL param; string = user override (including empty to clear filter).
+  const [scanId, setScanId] = useState<string | null>(null);
+  const effectiveScanId = scanId ?? scanIdFromUrl;
   const [scanKind, setScanKind] = useState("");
   const [findingKind, setFindingKind] = useState("");
   const [frameworkPrefix, setFrameworkPrefix] = useState("");
   const [limit, setLimit] = useState(100);
   const [selected, setSelected] = useState<FindingRow | null>(null);
 
-  useEffect(() => {
-    setScanId(scanIdFromUrl);
-  }, [scanIdFromUrl]);
-
   const findings = useQuery({
-    queryKey: ["findings", scanId, scanKind, findingKind, frameworkPrefix, limit],
+    queryKey: ["findings", effectiveScanId, scanKind, findingKind, frameworkPrefix, limit],
     queryFn: async () => {
       const { data, error } = await client.GET("/api/v1/findings", {
         params: {
           query: {
-            scan_id: scanId.trim() || undefined,
+            scan_id: effectiveScanId.trim() || undefined,
             scan_kind: scanKind.trim() || undefined,
             finding_kind: findingKind.trim() || undefined,
             framework: frameworkPrefix.trim() || undefined,
@@ -63,7 +60,7 @@ export function FindingsView() {
               Scan ID
             </label>
             <input
-              value={scanId}
+              value={scanId ?? scanIdFromUrl}
               onChange={(e) => setScanId(e.target.value)}
               placeholder="uuid"
               className="w-full rounded-ops-md border border-border bg-bg px-3 py-2 text-sm font-mono text-text"
