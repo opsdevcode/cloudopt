@@ -1,4 +1,4 @@
-.PHONY: help install dev up down migrate test test-all lint format typecheck check web
+.PHONY: help install dev up down migrate test test-all test-cov lint format typecheck check web
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -27,6 +27,9 @@ test: ## Offline unit lane — no services/keys/network (sandbox LLM)
 
 test-all: ## Full suite including integration (requires Postgres via `make up && make migrate`)
 	pytest
+
+test-cov: ## Full suite with coverage report (requires Postgres for integration tests)
+	pytest --cov=apps --cov=packages --cov-report=term-missing
 
 lint: ## Ruff lint
 	ruff check .

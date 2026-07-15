@@ -157,7 +157,15 @@ jobs:
 
       - name: Run tests
         if: steps.filter.outputs.ci == 'true'
-        run: pytest --tb=short -v
+        run: pytest --cov=apps --cov=packages --cov-report=term-missing --cov-report=xml --tb=short -v
+
+      - name: Upload coverage
+        if: steps.filter.outputs.ci == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 14
 
       - name: Skip (no relevant paths changed)
         if: steps.filter.outputs.ci != 'true'

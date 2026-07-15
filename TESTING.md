@@ -35,6 +35,22 @@ make test-all  # full suite (integration tests included)
 Mark DB-dependent tests with `@pytest.mark.integration` so they are skipped in the offline lane
 and run only when a database is available.
 
+Integration tests live in `tests/test_api_integration.py` (health readiness, scans, findings, metrics).
+They mock Redis/RQ enqueue so Postgres alone is sufficient locally.
+
+## Coverage
+
+Coverage is measured over `apps/` and `packages/` with a **40% minimum** gate (`fail_under` in `pyproject.toml`).
+
+```bash
+make test-cov   # full suite + terminal report (needs Postgres for integration tests)
+```
+
+CI runs `pytest --cov=apps --cov=packages` with Postgres up and migrations applied, so the **full suite**
+(including integration tests) runs in the Pytest job—not the offline `-m "not integration"` lane.
+
+Ratchet `fail_under` upward as coverage improves (e.g. +5% per quarter).
+
 ## Real inference (optional, still local)
 
 To exercise a real model without any cloud calls, run a local OpenAI-compatible server

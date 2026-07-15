@@ -102,6 +102,14 @@ markers = [
     "integration: requires Postgres/Redis (auto-skipped when CLOUDOPT_DATABASE_URL_SYNC is unreachable)",
 ]
 
+[tool.coverage.run]
+source = ["apps", "packages"]
+omit = ["tests/*", "alembic/versions/*"]
+
+[tool.coverage.report]
+fail_under = 40
+show_missing = true
+
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 branch = "main"
