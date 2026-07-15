@@ -1,0 +1,28 @@
+---
+description: Delegate cheap, well-scoped work to subagents on cheaper/faster models to conserve tokens and context
+alwaysApply: true
+---
+
+# Subagent cost routing (token efficiency)
+
+Conserve tokens and the main context window by delegating suitable work to subagents (Task tool) running on cheaper/faster models. Keep deep reasoning on the primary model.
+
+## Delegate to a cheaper-model subagent
+- Codebase search / exploration / "where is X" (use `explore`).
+- Mechanical or boilerplate edits, repetitive multi-file refactors.
+- Running tests/linters/builds and summarizing output.
+- Dependency/API lookups and doc gathering.
+
+## Keep on the primary model (do NOT delegate)
+- Architecture and design decisions, plans, trade-offs.
+- Security-sensitive changes and final review.
+- Tasks needing deep cross-file reasoning or product judgment.
+
+## How
+- Set an explicit cheaper/faster `model:` on the Task call. Pick the cheapest *capable* model available at run time (e.g. as of 2026-07: `composer-2.5-fast`, `cursor-grok-4.5-high-fast`); do not hardcode a single model — availability changes.
+- Give the subagent a fully self-contained prompt (it lacks your context).
+- Launch independent subagents in parallel.
+- Prefer read-only subagents when no writes are needed.
+
+## Call it out
+State when you offload: which task, which model/subagent, and that it's for token/cost efficiency (e.g. "Delegating this search to an `explore` subagent on a fast model to save tokens.").
