@@ -14,10 +14,10 @@ scan_id: jsonpath "$.id"
 
 # Poll scan until terminal state (retry up to ~90s)
 GET http://127.0.0.1:8000/api/v1/scans/{{scan_id}}
-HTTP 200
 [Options]
 retry: 45
-retry-interval: 2000
+retry-interval: 2000ms
+HTTP 200
 [Asserts]
 jsonpath "$.status" == "completed"
 
@@ -53,10 +53,10 @@ HTTP 200
 k8s_scan_id: jsonpath "$.id"
 
 GET http://127.0.0.1:8000/api/v1/scans/{{k8s_scan_id}}
-HTTP 200
 [Options]
 retry: 30
-retry-interval: 2000
+retry-interval: 2000ms
+HTTP 200
 [Asserts]
 jsonpath "$.status" == "completed"
 
