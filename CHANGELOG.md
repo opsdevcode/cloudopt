@@ -2,6 +2,70 @@
 
 <!-- version list -->
 
+## v0.6.1 (2026-07-15)
+
+### Bug Fixes
+
+- **ci**: Repair ci-e2e YAML and release secret check
+  ([#58](https://github.com/opsdevcode/cloudopt/pull/58),
+  [`d73c273`](https://github.com/opsdevcode/cloudopt/commit/d73c273e69c2202f325740fb6aef69114f34e274))
+
+- **e2e**: Allow zero finops findings in sandbox stack smoke
+  ([#58](https://github.com/opsdevcode/cloudopt/pull/58),
+  [`d73c273`](https://github.com/opsdevcode/cloudopt/commit/d73c273e69c2202f325740fb6aef69114f34e274))
+
+- **e2e**: Place Hurl [Options] before HTTP status line
+  ([#58](https://github.com/opsdevcode/cloudopt/pull/58),
+  [`d73c273`](https://github.com/opsdevcode/cloudopt/commit/d73c273e69c2202f325740fb6aef69114f34e274))
+
+- **test**: Add greenlet dep and reset DB engine cache between tests
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+- **web**: Exclude Playwright specs from Vitest; fix scans e2e locator
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+### Chores
+
+- **governance**: Add pre-commit, CONTRIBUTING, issue templates
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+### Continuous Integration
+
+- **governance**: Enforce checks and commit ruleset as code
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+### Documentation
+
+- **release**: Frame RELEASE_PAT as one-time solo setup
+  ([#56](https://github.com/opsdevcode/cloudopt/pull/56),
+  [`e7acce5`](https://github.com/opsdevcode/cloudopt/commit/e7acce512414624b6644f5d8cbd1f3fdc366850a))
+
+### Testing
+
+- Testing and governance hardening (5 phases)
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+- **api**: Add coverage gate and Postgres integration tests
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+- **cli**: Add CLI and worker job unit tests ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+- **e2e**: Add polyglot stack smoke and split CI lanes
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+- **web**: Add Vitest smoke tests for UI components
+  ([#57](https://github.com/opsdevcode/cloudopt/pull/57),
+  [`598c5fc`](https://github.com/opsdevcode/cloudopt/commit/598c5fc19db5d4cb6f0f38a7164a129a3d304cbf))
+
+
 ## v0.6.0 (2026-07-15)
 
 ### Bug Fixes
