@@ -16,7 +16,7 @@ CloudOpt is an **AI-assisted cloud platform** for **AWS** and **Kubernetes**. It
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 20+ (only for the web UI in `apps/web`)
+- Node.js 20.19+ (only for the web UI in `apps/web`; see `apps/web/.nvmrc`)
 - Docker and Docker Compose (for Postgres + Redis)
 - Optional: AWS credentials (Cost Explorer, Security Hub, Config, etc.), LLM API keys or self-hosted OpenAI-compatible URL
 

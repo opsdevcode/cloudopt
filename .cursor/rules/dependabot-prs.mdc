@@ -1,0 +1,24 @@
+---
+description: Automate Dependabot PR triage — resolve conflicts, regenerate lockfiles, test, merge
+alwaysApply: false
+---
+
+# Dependabot PR automation
+
+When the user asks to merge Dependabot PRs, clear the dependency backlog, or fix failing `npm audit` / lockfile CI after bot bumps, follow `.cursor/skills/dependabot-prs/SKILL.md`.
+
+## Must-do
+
+1. **Never leave conflict markers** in `package.json` / `package-lock.json` (check with `rg '^<<<<<<<'`).
+2. **Regenerate npm lockfiles** with Node from `apps/web/.nvmrc` (`npm ci`, `npm run build`, `npm audit --audit-level=high`, `npm run lint`) — do not commit a lockfile produced without Node.
+3. **Major bumps** (Tailwind 4, ESLint 10, TypeScript 6, Next major): verify config/build; defer or migrate fully — do not merge a broken half-upgrade.
+4. **Workflow PRs** (`.github/workflows/**`): merging via `gh` needs OAuth **`workflow`** scope (`gh auth refresh -h github.com -s workflow`) or merge in the GitHub UI.
+5. **After fixes on main**: run offline Python checks (`ruff`, `mypy apps packages`, `pytest -m "not integration"`) when Python paths changed.
+
+## Merge order
+
+GitHub Actions / pip-only first, then `apps/web` npm (one at a time if lockfile conflicts), then feature PRs.
+
+## Call it out
+
+State when using the Dependabot skill and which verification commands ran.
