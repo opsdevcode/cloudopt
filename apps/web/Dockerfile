@@ -13,6 +13,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Next.js rewrites resolve at build time, so the API origin must be set before `npm run build`.
+ARG CLOUDOPT_API_ORIGIN=http://127.0.0.1:8000
+ENV CLOUDOPT_API_ORIGIN=${CLOUDOPT_API_ORIGIN}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

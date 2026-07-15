@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from packages.ai.agent import run_finops_agent_sync
-from packages.ai.llm_client import LLMClient
+from packages.ai.llm_client import LLMRouter
 from packages.ai.rag import ingest_finding_chunk_sync
 from packages.cloud_audit import (
     collect_config_non_compliant_rules,
@@ -197,15 +197,22 @@ def generate_findings(scan_id: str) -> dict[str, Any]:
         if scan.started_at is None:
             scan.started_at = datetime.now(UTC)
 
+        scan_llm_override = (scan.metadata_ or {}).get("llm")
         context: dict[str, Any] = {
             "scan_id": scan.id,
             "tenant_id": scan.tenant_id,
             "cluster_name": scan.cluster_name,
             "metadata": scan.metadata_ or {},
             "rag_query": f"cost optimization kubernetes AWS {scan.cluster_name or ''}".strip(),
+            # Per-scan routing override (see packages.ai.routing.resolve_routing precedence).
+            "llm": scan_llm_override,
         }
 
-        result = run_finops_agent_sync(session, scan.tenant_id, context)
+        # Resolve routing once (env/file + per-scan override); defaults to the offline sandbox.
+        router = LLMRouter.from_settings(
+            scan_override=scan_llm_override if isinstance(scan_llm_override, dict) else None
+        )
+        result = run_finops_agent_sync(session, scan.tenant_id, context, router=router)
 
         created: list[Finding] = []
         for payload in result.get("findings", []):
@@ -226,10 +233,10 @@ def generate_findings(scan_id: str) -> dict[str, Any]:
 
         session.flush()
 
-        llm = LLMClient.from_settings()
-        if llm:
-            for finding in created:
-                ingest_finding_chunk_sync(session, scan.tenant_id, finding, client=llm)
+        # Embed + index chunks for RAG using the resolved embed tier (sandbox by default).
+        embed_client = router.client_for("embed")
+        for finding in created:
+            ingest_finding_chunk_sync(session, scan.tenant_id, finding, client=embed_client)
 
         scan.status = "completed"
         scan.completed_at = datetime.now(UTC)

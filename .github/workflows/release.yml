@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0 # full history required for semantic-release to find commits since last tag
@@ -63,7 +63,7 @@ jobs:
 
       - name: Semantic version and release
         id: release
-        uses: python-semantic-release/python-semantic-release@v10.5.3
+        uses: python-semantic-release/python-semantic-release@v10.6.1
         with:
           github_token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"

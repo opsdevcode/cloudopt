@@ -16,8 +16,11 @@ CloudOpt is an **AI-assisted cloud platform** for **AWS** and **Kubernetes**. It
 ### Prerequisites
 
 - Python 3.11+
+- Node.js 20+ (only for the web UI in `apps/web`)
 - Docker and Docker Compose (for Postgres + Redis)
 - Optional: AWS credentials (Cost Explorer, Security Hub, Config, etc.), LLM API keys or self-hosted OpenAI-compatible URL
+
+By default the LLM layer runs in an **offline sandbox** (no keys, no network, no GPU), so a fresh clone stands up and passes tests without any external services. See [docs/MODEL_GUIDANCE.md](docs/MODEL_GUIDANCE.md) to plug in local (Ollama) or hosted models.
 
 ### 1. Clone and install
 
@@ -85,13 +88,51 @@ cloudopt audit k8s --polaris-json ./polaris.json --kube-bench-json ./kube-bench.
 
 See `.env.example` for `CLOUDOPT_API_BASE_URL`, audit limits, and AWS/LLM variables.
 
+### 7. Web UI (optional)
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+- Web UI: http://localhost:3000 (proxies `/api` and `/health` to the API on port 8000)
+
 ### Full stack with Docker Compose
 
 ```bash
+cp .env.example .env   # optional; compose has sane defaults without it
 docker-compose up --build
 ```
 
-Then open http://localhost:8000. For CLI commands against Dockerized services from your host, point `CLOUDOPT_DATABASE_URL` / `CLOUDOPT_API_BASE_URL` at `localhost` as needed.
+Migrations run automatically via a one-shot `migrate` service before the API and worker start, so the schema is ready on first boot. Then open:
+
+- Web UI: http://localhost:3000
+- API docs: http://localhost:8000/docs
+
+For CLI commands against Dockerized services from your host, point `CLOUDOPT_DATABASE_URL` / `CLOUDOPT_API_BASE_URL` at `localhost` as needed.
+
+## LLM routing
+
+CloudOpt is provider-agnostic and never hardcodes a model. Tasks route to one of four tiers — `embed`, `cheap`, `standard`, `heavy` — bound to providers via configuration:
+
+- **Offline sandbox (default):** no keys, no network, no GPU. A fresh clone runs and tests green.
+- **Single-provider shorthand:** set `CLOUDOPT_LLM_BASE_URL` (+ `CLOUDOPT_LLM_CHAT_MODEL` / `CLOUDOPT_LLM_EMBED_MODEL`) to route all tiers to one OpenAI-compatible endpoint (local Ollama/vLLM or a cloud provider).
+- **Multi-provider routing:** set `CLOUDOPT_LLM_ROUTING_JSON` or `CLOUDOPT_LLM_ROUTING_FILE` to bind each tier independently.
+- **Per-scan override:** `scan.metadata.llm` can pin a tier/model (or `{"mode":"sandbox"}`) for one run.
+
+Precedence: per-scan → env/file routing → `CLOUDOPT_LLM_*` shorthand → sandbox. See [docs/MODEL_GUIDANCE.md](docs/MODEL_GUIDANCE.md) for evidence-backed model suggestions and the routing schema.
+
+## Testing
+
+Two lanes (details in [TESTING.md](TESTING.md)):
+
+```bash
+make test       # offline unit lane: no services/keys/network (sandbox LLM)
+make test-all   # full suite incl. integration (needs `make up && make migrate`)
+```
+
+A bare clone passes `make test` because the LLM layer defaults to the offline sandbox and integration tests auto-skip when Postgres is unreachable.
 
 ## Scan kinds
 
@@ -114,6 +155,7 @@ cloudopt/
     api/          # FastAPI (health, scans, findings)
     worker/       # RQ worker (dispatch_scan by scan_kind)
     cli/          # Typer CLI (scan, audit)
+    web/          # Next.js console (dashboards, scans, findings, RAG)
   packages/
     core/         # Config, DB, models, job queue helper
     aws/          # boto3 clients (Cost Explorer, EKS, EC2, Security Hub, Config, …)
@@ -153,6 +195,8 @@ All settings use the **`CLOUDOPT_`** prefix. See [`.env.example`](.env.example) 
 
 - [PROJECT_SPEC.md](PROJECT_SPEC.md) — product scope and roadmap  
 - [docs/LLM_AND_ACCOUNT_CONTEXT.md](docs/LLM_AND_ACCOUNT_CONTEXT.md) — LLM, RAG, and tenant-scoped context  
+- [docs/MODEL_GUIDANCE.md](docs/MODEL_GUIDANCE.md) — evidence-backed model suggestions + routing schema  
+- [TESTING.md](TESTING.md) — offline unit and integration testing lanes  
 - [SECURITY.md](SECURITY.md) — reporting vulnerabilities  
 
 ## Protected main and releases

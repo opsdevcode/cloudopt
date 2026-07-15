@@ -43,7 +43,6 @@ dependencies = [
     # Worker / jobs
     "redis>=5.0.0",
     "rq>=1.15.0",
-    "rq-scheduler>=0.13.0",
     # Config & env
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
@@ -99,6 +98,9 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: requires Postgres/Redis (auto-skipped when CLOUDOPT_DATABASE_URL_SYNC is unreachable)",
+]
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
