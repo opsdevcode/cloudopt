@@ -1,0 +1,46 @@
+---
+description: SOP when work stalls, waits too long, or resumes after a long break — stop polling and start the matching playbook
+alwaysApply: true
+---
+
+# Long-running and stall SOP
+
+When **X exceeds Y**, stop the current loop and **start the SOP** in the right column. Do not repeat the same failing action without new evidence.
+
+## Thresholds
+
+| If this (X) | Exceeds (Y) | SOP (start) |
+|-------------|-------------|-------------|
+| `gh pr checks --watch` / CI poll | **3 min** with no pass/fail terminal state | Fetch **failed job logs** (`gh run view --log-failed`); fix or report; do not keep watching blindly |
+| Same command or fix | **2 failures** with same error | New hypothesis; change tool/path (e.g. logs → code → different test); never third identical retry |
+| Background shell / `Await` | **Expected runtime + 30s** | One status poll; then read terminal output or kill and diagnose |
+| Stack E2E / Docker locally | **Unavailable** after one check | Document gap; rely on `ci-e2e.yml`; do not pretend verified |
+| PR merge requested | Checks **green** but **review/rules blocked** | Report exact blocker; use `--admin` **only** when user explicitly asked to merge |
+| Subagent (Task) | **2 min** no completion | Wait for notification once; do not launch duplicate agents for same task |
+| Open todos + user returns after **long break** | First turn of session | **Resume SOP** (below) before new work |
+
+## Resume SOP (after long break or handoff)
+
+Run in parallel, then summarize in one short block:
+
+1. `git status -sb` — branch, clean/dirty, ahead/behind
+2. `gh pr list --state open` — anything to merge or fix
+3. Latest CI on open PRs or `main` if user asked about merge
+4. Re-read todo list — mark stale items; do not redo completed work
+
+Then continue the **smallest next step** toward the user's goal.
+
+## While waiting (CI, Docker, subagent)
+
+- Do **other** independent work (docs, small fixes, rule updates) if it unblocks the goal
+- Tell the user what's waiting and what you're doing instead
+- When the wait finishes, **verify outcome** (don't assume green)
+
+## Merge-all SOP
+
+When user says "merge all":
+
+1. Inventory open PRs (`gh pr list --state open`)
+2. For each: checks green → merge (`--squash --delete-branch`; `--admin` if review-blocked and user authorized)
+3. If none open: say so; pull `main`; report latest release/tag if relevant
+4. Post-merge: confirm release workflow on `main` if app paths changed
