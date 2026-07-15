@@ -40,7 +40,7 @@ Example posture outcomes:
 
 **CLI:** Typer  
 
-**AI:** OpenAI-compatible APIs (cloud or self-hosted vLLM, etc.)  
+**AI:** Provider-agnostic routing over OpenAI-compatible APIs (local Ollama/vLLM, cloud, or any gateway). Four tiers (`embed`, `cheap`, `standard`, `heavy`) bound by config; ships with an offline sandbox default so a fresh clone runs with no keys/GPU. No model is mandated; suggestions live in `docs/MODEL_GUIDANCE.md` with dated citations.  
 
 **Infrastructure signals (directional):**
 
