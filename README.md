@@ -201,11 +201,11 @@ All settings use the **`CLOUDOPT_`** prefix. See [`.env.example`](.env.example) 
 
 ## Protected main and releases
 
-This repo uses a **protected `main` branch** and **conventional-commit–driven releases**. Merges to `main` run the release workflow: version is computed from [conventional commits](https://www.conventionalcommits.org/), then `pyproject.toml` is updated, a tag is created, and a GitHub release is published.
+This repo uses a **protected `main` branch** and **conventional-commit–driven releases**. Merges to `main` (when path filters match) run the release workflow: version is computed from [conventional commits](https://www.conventionalcommits.org/), then `pyproject.toml` is updated, a tag is created, and a GitHub release is published. Maintainers can also run **Actions → Release → Run workflow** after fixing secrets or rules.
 
-If `main` is protected (e.g. "Require a pull request"), the default `GITHUB_TOKEN` cannot push the version-bump commit. Add a repository secret **`RELEASE_PAT`** (a Personal Access Token with `repo` scope from a user who can bypass branch protection) and, in **Settings → Branches → main**, add that user under "Allow specified actors to bypass required pull requests". The workflow uses `RELEASE_PAT` when set, otherwise `GITHUB_TOKEN`.
+If `main` is protected (require PR, status checks, and/or Code Scanning gates), the default `GITHUB_TOKEN` cannot push the version-bump commit (GH013 / protected ref). Add a repository secret **`RELEASE_PAT`** (PAT with `repo` / contents write from a user or bot on the ruleset **bypass** list—including any Code Scanning push restrictions). The workflow uses `RELEASE_PAT` when set, otherwise `GITHUB_TOKEN`.
 
-**One-time setup:** See [.github/BRANCH_PROTECTION_AND_RELEASE.md](.github/BRANCH_PROTECTION_AND_RELEASE.md) for branch protection, required status checks, and CODEOWNERS.
+**One-time setup:** See [.github/BRANCH_PROTECTION_AND_RELEASE.md](.github/BRANCH_PROTECTION_AND_RELEASE.md) for rulesets, required status checks (CI, Security, CodeQL), `RELEASE_PAT`, and troubleshooting.
 
 ## License
 
