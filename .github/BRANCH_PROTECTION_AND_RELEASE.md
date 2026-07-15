@@ -89,11 +89,23 @@ Optional / path-filtered:
 
 | Job name | Workflow | Notes |
 |----------|----------|--------|
-| CLI tests | CI (CLI) (`ci-cli.yml`) | Runs when CLI-related paths change; require only if you want it always gating merges |
+| Web build | CI (Web) (`ci-web.yml`) | Lint, Vitest, and build when `apps/web/**` changes |
+| CLI tests | CI (CLI) (`ci-cli.yml`) | Runs when CLI-related paths change |
 
 If a job is skipped (e.g. path filter didn’t match), GitHub may still report success; prefer requiring jobs that always run or that you care about for every PR.
 
-## 5. Result
+## 5. Ruleset as code
+
+The `main` branch ruleset snapshot lives in [`.github/rulesets/main.json`](../rulesets/main.json). After editing it in a PR, apply to GitHub:
+
+```bash
+chmod +x scripts/apply-main-ruleset.sh
+./scripts/apply-main-ruleset.sh
+```
+
+Override `CLOUDOPT_MAIN_RULESET_ID` or `CLOUDOPT_GITHUB_REPO` if needed.
+
+## 6. Result
 
 - All changes to `main` go through a PR.
 - CI, version check, security, and CodeQL checks must pass when required.

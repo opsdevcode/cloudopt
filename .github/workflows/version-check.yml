@@ -45,6 +45,32 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Validate conventional commit subjects
+        if: steps.filter.outputs.version == 'true'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          base="$(git merge-base origin/main HEAD)"
+          invalid=0
+          while IFS= read -r subject; do
+            [ -z "$subject" ] && continue
+            if echo "$subject" | grep -qE '^(feat|fix|perf|docs|chore|refactor|test|ci|build)(\([a-zA-Z0-9._/-]+\))?!?: .+'; then
+              continue
+            fi
+            if echo "$subject" | grep -qE '^Merge (pull request|branch|remote-tracking branch) '; then
+              continue
+            fi
+            if echo "$subject" | grep -qE '^chore\(release\): release v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              continue
+            fi
+            echo "Non-conventional commit subject: $subject"
+            invalid=1
+          done < <(git log --format=%s "${base}..HEAD")
+          if [ "$invalid" -ne 0 ]; then
+            echo "::error::PR contains non-conventional commit subjects. Use feat:/fix:/chore: etc."
+            exit 1
+          fi
+
       - name: Install python-semantic-release
         if: steps.filter.outputs.version == 'true'
         run: pip install python-semantic-release>=10.5.0
