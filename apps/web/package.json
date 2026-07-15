@@ -20,8 +20,13 @@
     "next": "^16.2.10",
     "openapi-fetch": "^0.17.0",
     "react": "^19.0.0",
+<<<<<<< HEAD
+    "react-dom": "^19.0.0",
+    "recharts": "^3.9.1"
+=======
     "react-dom": "^19.2.7",
     "recharts": "^3.8.1"
+>>>>>>> origin/main
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
