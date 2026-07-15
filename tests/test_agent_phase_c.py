@@ -74,6 +74,34 @@ def test_run_finops_agent_tool_loop_then_json(monkeypatch: pytest.MonkeyPatch) -
     assert llm.chat_round.call_count == 2
 
 
+def test_agent_uses_router_tiers_when_no_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With tools disabled, the agent should request the standard (chat) and embed tiers."""
+    monkeypatch.setattr("packages.ai.agent.retrieve_context_sync", lambda *a, **k: [])
+    monkeypatch.setattr("packages.ai.agent.format_rag_block", lambda _chunks: "")
+
+    settings = MagicMock()
+    settings.agent_tools_enabled = False
+    monkeypatch.setattr("packages.ai.agent.get_settings", lambda: settings)
+
+    requested: list[str] = []
+    chat_client = MagicMock()
+    chat_client.chat_json.return_value = {"summary": "ok", "findings": []}
+
+    class FakeRouter:
+        def client_for(self, task: str) -> MagicMock:
+            requested.append(task)
+            return chat_client
+
+    from packages.ai.agent import run_finops_agent_sync
+
+    out = run_finops_agent_sync(
+        MagicMock(), "tenant-a", {"cluster_name": "prod"}, router=FakeRouter()
+    )
+    assert out["summary"] == "ok"
+    assert "finops_agent" in requested
+    assert "embed" in requested
+
+
 def test_finalize_json_round_uses_forced_completion(monkeypatch: pytest.MonkeyPatch) -> None:
     llm = MagicMock()
     llm.chat_round.return_value = ChatRoundResult(

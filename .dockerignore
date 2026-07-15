@@ -1,34 +1,23 @@
-# Environment
-.env
+.git
+.gitignore
 .venv
 venv
 env
-
-# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 .eggs/
 dist/
 build/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Testing
 .coverage
 htmlcov/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-
-# Node / Next.js (apps/web)
-node_modules/
-.next/
-
-# Misc
+.idea/
+.vscode/
 *.log
 .DS_Store
+.env
+apps/web/node_modules/
+apps/web/.next/

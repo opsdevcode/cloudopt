@@ -8,7 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from packages.ai.llm_client import AsyncLLMClient, LLMClient
+from packages.ai.llm_client import (
+    AsyncChatClient,
+    AsyncLLMClient,
+    LLMClient,
+    SyncChatClient,
+)
 from packages.core.config import get_settings
 from packages.core.models import Finding, RagChunk
 
@@ -38,7 +43,7 @@ async def ingest_finding_chunk_async(
     tenant_id: str,
     finding: Finding,
     *,
-    client: AsyncLLMClient | None = None,
+    client: AsyncChatClient | None = None,
 ) -> RagChunk | None:
     """Embed finding text and persist a rag_chunks row (async)."""
     llm = client or AsyncLLMClient.from_settings()
@@ -66,7 +71,7 @@ def ingest_finding_chunk_sync(
     tenant_id: str,
     finding: Finding,
     *,
-    client: LLMClient | None = None,
+    client: SyncChatClient | None = None,
 ) -> RagChunk | None:
     """Embed finding text and persist a rag_chunks row (sync; RQ worker)."""
     llm = client or LLMClient.from_settings()
@@ -95,7 +100,7 @@ async def retrieve_context_async(
     query: str,
     *,
     limit: int = 8,
-    client: AsyncLLMClient | None = None,
+    client: AsyncChatClient | None = None,
 ) -> list[str]:
     """Return top-k chunk texts for tenant using cosine similarity to the query embedding."""
     llm = client or AsyncLLMClient.from_settings()
@@ -120,7 +125,7 @@ def retrieve_context_sync(
     query: str,
     *,
     limit: int = 8,
-    client: LLMClient | None = None,
+    client: SyncChatClient | None = None,
 ) -> list[str]:
     """Sync variant for workers."""
     llm = client or LLMClient.from_settings()

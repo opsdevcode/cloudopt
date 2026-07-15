@@ -27,6 +27,23 @@ services:
       timeout: 5s
       retries: 5
 
+  # One-shot: apply migrations before api/worker start so a fresh clone has a usable schema.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: alembic upgrade head
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      CLOUDOPT_DATABASE_URL: postgresql+asyncpg://cloudopt:cloudopt@postgres:5432/cloudopt
+      CLOUDOPT_DATABASE_URL_SYNC: postgresql://cloudopt:cloudopt@postgres:5432/cloudopt
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build:
       context: .
@@ -35,7 +52,8 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       CLOUDOPT_DATABASE_URL: postgresql+asyncpg://cloudopt:cloudopt@postgres:5432/cloudopt
       CLOUDOPT_DATABASE_URL_SYNC: postgresql://cloudopt:cloudopt@postgres:5432/cloudopt
@@ -45,6 +63,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   worker:
     build:
@@ -52,7 +72,8 @@ services:
       dockerfile: Dockerfile
     command: python -m apps.worker.main
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       CLOUDOPT_DATABASE_URL: postgresql+asyncpg://cloudopt:cloudopt@postgres:5432/cloudopt
       CLOUDOPT_DATABASE_URL_SYNC: postgresql://cloudopt:cloudopt@postgres:5432/cloudopt
@@ -62,16 +83,18 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   web:
     build:
       context: ./apps/web
       dockerfile: Dockerfile
+      args:
+        # Baked into the Next.js build so server-side rewrites target the API on the Docker network.
+        CLOUDOPT_API_ORIGIN: http://api:8000
     ports:
       - "3000:3000"
-    environment:
-      # Next.js server-side rewrites: proxy API from the Docker network
-      CLOUDOPT_API_ORIGIN: http://api:8000
     depends_on:
       api:
         condition: service_started
