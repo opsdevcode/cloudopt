@@ -201,11 +201,11 @@ All settings use the **`CLOUDOPT_`** prefix. See [`.env.example`](.env.example) 
 
 ## Protected main and releases
 
-This repo uses a **protected `main` branch** and **conventional-commit–driven releases**. Merges to `main` (when path filters match) run the release workflow: version is computed from [conventional commits](https://www.conventionalcommits.org/), then `pyproject.toml` is updated, a tag is created, and a GitHub release is published. Maintainers can also run **Actions → Release → Run workflow** after fixing secrets or rules.
+This repo uses a **protected `main` branch** and **conventional-commit–driven releases**. Merges to `main` (when path filters match) run the release workflow: version is computed from [conventional commits](https://www.conventionalcommits.org/), then `pyproject.toml` is updated, a tag is created, and a GitHub release is published. Maintainers can also run **Actions → Release → Run workflow** to retry after setup.
 
-If `main` is protected (require PR, status checks, and/or Code Scanning gates), the default `GITHUB_TOKEN` cannot push the version-bump commit (GH013 / protected ref). Add a repository secret **`RELEASE_PAT`** (PAT with `repo` / contents write from a user or bot on the ruleset **bypass** list—including any Code Scanning push restrictions). The workflow uses `RELEASE_PAT` when set, otherwise `GITHUB_TOKEN`.
+On protected `main`, `GITHUB_TOKEN` cannot push the version-bump commit (GH013). **One-time solo-org setup:** add repository secret **`RELEASE_PAT`** (fine-grained or classic PAT with contents write) and put the token owner on the `main` ruleset **bypass** list (including Code Scanning push gates). No ongoing PAT “refresh” unless the token expires or is revoked.
 
-**One-time setup:** See [.github/BRANCH_PROTECTION_AND_RELEASE.md](.github/BRANCH_PROTECTION_AND_RELEASE.md) for rulesets, required status checks (CI, Security, CodeQL), `RELEASE_PAT`, and troubleshooting.
+**Details:** [.github/BRANCH_PROTECTION_AND_RELEASE.md](.github/BRANCH_PROTECTION_AND_RELEASE.md) — rulesets, required checks, troubleshooting, and when to graduate to a GitHub App for team workflows.
 
 ## License
 

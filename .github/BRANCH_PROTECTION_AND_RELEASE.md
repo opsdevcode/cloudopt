@@ -1,6 +1,6 @@
 # Protected main and release setup
 
-This repo uses a **protected `main` branch** and **conventional-commit–driven releases**. Follow these steps once per repository (or org) so CI and releases behave correctly.
+This repo uses a **protected `main` branch** and **conventional-commit–driven releases**. For a **solo org** (one owner, no collaborators), the steps below are a **one-time setup**—not an ongoing “PAT refresh” treadmill. Set `RELEASE_PAT` once (or again only if the token expires or is revoked).
 
 Related workflow: [`.github/workflows/release.yml`](workflows/release.yml) (includes an inline troubleshooting header for GH013).
 
@@ -32,17 +32,30 @@ In GitHub: **Settings → Code and automation → Rules → Rulesets** (or **Set
    - **Do not allow force pushes** / **Do not allow deletions** as desired.
 4. Under **Allow specified actors to bypass required pull requests**, add the same user you will use for `RELEASE_PAT` (see below) so the Release workflow can push.
 
-## 2. Add `RELEASE_PAT` for the Release workflow
+## 2. One-time `RELEASE_PAT` for the Release workflow (solo org)
 
-When `main` is protected, the default `GITHUB_TOKEN` cannot push the version-bump commit and tag. The Release workflow uses a Personal Access Token when provided.
+When `main` is protected, the default `GITHUB_TOKEN` cannot push the version-bump commit and tag—that is a GitHub platform rule (GH013), not a CloudOpt bug. The Release workflow uses a Personal Access Token when provided.
 
-1. Create a **Personal Access Token** (classic or fine-grained) with:
-   - **repo** scope (classic), or **Contents: read and write** and **Metadata: read** (fine-grained).
-2. In the repo: **Settings → Secrets and variables → Actions**.
-3. Add a repository secret named **`RELEASE_PAT`** with the token value.
-4. Ensure the user (or bot) who owns the token is on the **bypass list** for the `main` ruleset/protection (step 1), including any Code Scanning / status-check gates that reject direct pushes.
+**Do this once** (repeat only if the token expires or is revoked):
 
-The workflow uses `secrets.RELEASE_PAT || secrets.GITHUB_TOKEN`. Without `RELEASE_PAT`, releases may still run on an unprotected `main`, but once protection (or Code Scanning push gates) is on, `RELEASE_PAT` plus bypass is required.
+1. Create a **fine-grained PAT** (preferred) scoped to this repo only, or a classic PAT with **repo** scope:
+   - Fine-grained: **Contents: read and write**, **Metadata: read**
+   - Optional: set an expiration (e.g. 90 days) and add a calendar reminder—still not scheduled “rotation automation”
+2. In the repo: **Settings → Secrets and variables → Actions** → add secret **`RELEASE_PAT`** with the token value.
+3. Add the token owner (your GitHub user or a release bot) to the **`main` ruleset bypass list** (step 1), including Code Scanning / status-check gates that block direct pushes.
+
+The workflow uses `secrets.RELEASE_PAT || secrets.GITHUB_TOKEN`. Without `RELEASE_PAT` on a protected `main`, Release will compute the next version but fail when pushing the version commit and tag.
+
+### When you add collaborators (defer until then)
+
+| Approach | Long-lived secret? | Push to `main`? | Notes |
+|----------|-------------------|-----------------|-------|
+| **GitHub App** (release bot) | App private key in secrets | Yes, with app on bypass list | Best for teams / resale |
+| **Release PR** | None beyond `GITHUB_TOKEN` | No — version bump via PR merge | No ruleset bypass needed |
+| **Tag-only release** | None | No — version only in tag/Release | Diverges from `version_toml` model |
+| **Manual release** | None | Maintainer tags when ready | Disable auto push trigger |
+
+For multi-tenant or team workflows, prefer a **GitHub App** on the bypass list instead of a personal PAT.
 
 ### Troubleshooting GH013 / protected ref failures
 
