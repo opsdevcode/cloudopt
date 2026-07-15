@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None
     llm_chat_model: str = "Qwen/Qwen2.5-7B-Instruct"
     llm_embed_model: str = "BAAI/bge-m3"
+    # Routing: "auto" resolves from routing config / shorthand env; "sandbox" forces the offline provider.
+    llm_mode: str = "auto"
+    # Optional multi-provider routing config as inline JSON or a path to a JSON file.
+    # When unset, CLOUDOPT_LLM_* above act as a single-provider shorthand; if that is also unset,
+    # the offline sandbox is used so the app runs with no keys/GPU.
+    llm_routing_json: str | None = None
+    llm_routing_file: str | None = None
     # Must match the embedding model output dimension and DB vector column (default: bge-m3 / many open models).
     embedding_dimensions: int = 1024
     # Legacy name still supported in code paths that check OpenAI directly
@@ -65,7 +72,13 @@ class Settings(BaseSettings):
         return v
 
     @field_validator(
-        "llm_base_url", "llm_api_key", "openai_api_key", "anthropic_api_key", mode="before"
+        "llm_base_url",
+        "llm_api_key",
+        "openai_api_key",
+        "anthropic_api_key",
+        "llm_routing_json",
+        "llm_routing_file",
+        mode="before",
     )
     @classmethod
     def _empty_str_to_none(cls, v: object) -> object:

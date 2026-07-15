@@ -17,6 +17,21 @@ CloudOpt uses **retrieval and structured data** to reflect how each account uses
 | **Prompt-time context** | Before generation, retrieve top-k chunks for **that tenant only** and attach them to the prompt. |
 | **Fine-tuning / LoRA** | Optional later for formatting or narrow tasks—not a substitute for RAG for factual account behavior. |
 
-## Self-hosted inference
+## Provider-agnostic routing (four tiers)
 
-When `CLOUDOPT_LLM_BASE_URL` points at vLLM (or another OpenAI-compatible server), prompts and optional embeddings can stay in your network. Customer billing text should still be **minimized and redacted** in stored chunks per your security policy.
+CloudOpt never hardcodes a model. Each task routes to a tier — `embed`, `cheap`, `standard`, `heavy` — that is bound to a provider via configuration. Resolution precedence (highest first):
+
+1. **Per-scan override** — `scan.metadata.llm` pins a tier/model (or `{"mode":"sandbox"}`) for one run.
+2. **Env/file routing** — `CLOUDOPT_LLM_ROUTING_JSON` / `CLOUDOPT_LLM_ROUTING_FILE` bind tiers to providers.
+3. **Single-provider shorthand** — `CLOUDOPT_LLM_BASE_URL` + `CLOUDOPT_LLM_CHAT_MODEL` / `CLOUDOPT_LLM_EMBED_MODEL` route all tiers to one endpoint.
+4. **Offline sandbox** — the zero-config default: deterministic, network-free responses so the product runs and tests with no keys/GPU.
+
+Role → tier: RAG embeddings use `embed`; the FinOps agent tool loop uses `standard`; final JSON synthesis / low-confidence retry uses `heavy`; bulk summarize/classify (future) uses `cheap`.
+
+A per-tenant, DB-backed routing layer (encrypted keys, config API/UI) is **deferred** until authentication and SSRF controls exist; the resolver already has a seam for it.
+
+See [MODEL_GUIDANCE.md](MODEL_GUIDANCE.md) for evidence-backed suggestions and the routing JSON schema.
+
+## Self-hosted / local inference
+
+When `CLOUDOPT_LLM_BASE_URL` points at a local OpenAI-compatible server (Ollama, vLLM, llama.cpp) or self-hosted gateway, prompts and embeddings stay in your network. Customer billing text should still be **minimized and redacted** in stored chunks per your security policy.

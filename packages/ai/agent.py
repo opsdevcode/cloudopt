@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from packages.ai.analyzer import FINOPS_SYSTEM_PROMPT, validate_finops_llm_payload
-from packages.ai.llm_client import ChatRoundResult, LLMClient
+from packages.ai.llm_client import ChatRoundResult, LLMRouter, SyncChatClient
 from packages.ai.rag import format_rag_block, retrieve_context_sync
 from packages.ai.tools import FINOPS_TOOL_DEFINITIONS, execute_finops_tool
 from packages.core.config import get_settings
@@ -85,14 +85,15 @@ def _run_finops_agent_single_shot(
     context: dict[str, Any],
     *,
     rag_query: str | None,
-    client: LLMClient,
+    client: SyncChatClient,
+    embed_client: SyncChatClient,
 ) -> dict[str, Any]:
     q = (
         rag_query
         or context.get("rag_query")
         or str(context.get("cluster_name") or "cost optimization")
     )
-    chunks = retrieve_context_sync(session, tenant_id, str(q), client=client)
+    chunks = retrieve_context_sync(session, tenant_id, str(q), client=embed_client)
     rag_block = format_rag_block(chunks)
 
     user_parts: list[str] = []
@@ -108,7 +109,7 @@ def _run_finops_agent_single_shot(
 
 
 def _finalize_json_round(
-    llm: LLMClient,
+    llm: SyncChatClient,
     messages: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Force JSON output (tool_choice none + json_object) after tool rounds."""
@@ -153,25 +154,44 @@ def run_finops_agent_sync(
     context: dict[str, Any],
     *,
     rag_query: str | None = None,
-    client: LLMClient | None = None,
+    client: SyncChatClient | None = None,
+    router: LLMRouter | None = None,
 ) -> dict[str, Any]:
     """
     RAG retrieval, then either a single structured LLM call or a short tool loop (Phase C).
 
+    Roles map to routing tiers: the tool loop uses ``standard`` (task ``finops_agent``), the
+    final JSON synthesis uses ``heavy`` (task ``finops_finalize``), and RAG uses ``embed``.
+    Pass an explicit ``client`` to force one client for every role (used in tests). Otherwise a
+    router is resolved from settings + the per-scan ``context["llm"]`` override; with no config
+    it resolves to the offline sandbox.
+
     Tool loop is bounded by ``CLOUDOPT_AGENT_MAX_TOOL_ROUNDS``; disable via
     ``CLOUDOPT_AGENT_TOOLS_ENABLED=false``.
     """
-    llm = client or LLMClient.from_settings()
-    if not llm:
-        return {
-            "summary": "LLM not configured.",
-            "findings": [],
-        }
-
     settings = get_settings()
+    if client is not None:
+        chat_client: SyncChatClient = client
+        finalize_client: SyncChatClient = client
+        embed_client: SyncChatClient = client
+    else:
+        router = router or LLMRouter.from_settings(
+            settings, scan_override=context.get("llm") if isinstance(context, dict) else None
+        )
+        chat_client = router.client_for("finops_agent")
+        finalize_client = router.client_for("finops_finalize")
+        embed_client = router.client_for("embed")
+
+    llm = chat_client
+
     if not settings.agent_tools_enabled:
         return _run_finops_agent_single_shot(
-            session, tenant_id, context, rag_query=rag_query, client=llm
+            session,
+            tenant_id,
+            context,
+            rag_query=rag_query,
+            client=chat_client,
+            embed_client=embed_client,
         )
 
     q = (
@@ -179,7 +199,7 @@ def run_finops_agent_sync(
         or context.get("rag_query")
         or str(context.get("cluster_name") or "cost optimization")
     )
-    chunks = retrieve_context_sync(session, tenant_id, str(q), client=llm)
+    chunks = retrieve_context_sync(session, tenant_id, str(q), client=embed_client)
     rag_block = format_rag_block(chunks)
 
     user_parts: list[str] = []
@@ -236,4 +256,4 @@ def run_finops_agent_sync(
             }
         )
 
-    return _finalize_json_round(llm, messages)
+    return _finalize_json_round(finalize_client, messages)
