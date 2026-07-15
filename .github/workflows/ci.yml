@@ -1,4 +1,4 @@
-# On PR: ruff (lint) + mypy + full test suite (pytest with Postgres).
+# On PR: ruff (lint) + mypy + fast pytest (excludes e2e; see ci-e2e.yml for stack smoke).
 # CLI tests run in a separate workflow (ci-cli.yml) only when CLI code changes.
 # Workflow runs on every PR; jobs run only when path filter matches, else report success (skip) so status is not pending.
 name: CI
@@ -121,6 +121,7 @@ jobs:
     env:
       CLOUDOPT_DATABASE_URL: postgresql+asyncpg://cloudopt:cloudopt@localhost:5432/cloudopt
       CLOUDOPT_DATABASE_URL_SYNC: postgresql://cloudopt:cloudopt@localhost:5432/cloudopt
+      CLOUDOPT_LLM_MODE: sandbox
 
     steps:
       - uses: actions/checkout@v7
@@ -157,7 +158,15 @@ jobs:
 
       - name: Run tests
         if: steps.filter.outputs.ci == 'true'
-        run: pytest --tb=short -v
+        run: pytest -m "not e2e" --cov=apps --cov=packages --cov-report=term-missing --cov-report=xml --tb=short -v
+
+      - name: Upload coverage
+        if: steps.filter.outputs.ci == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 14
 
       - name: Skip (no relevant paths changed)
         if: steps.filter.outputs.ci != 'true'

@@ -17,7 +17,9 @@ alwaysApply: true
 1. **Create a branch from `main` first** (or fork and branch): `git checkout main && git pull && git checkout -b <type>/short-name` — use the type that matches your change (e.g. `feat/thing`, `fix/thing`, `chore/thing`, `docs/thing`, `refactor/thing`, `test/thing`, `ci/thing`, `build/thing`, `perf/thing`)
 2. Make all changes on that branch
 3. Commit and push the branch; open a pull request
-4. **After merge**: `git checkout main && git pull` — delete the merged branch locally: `git branch -d <type>/your-branch`
+4. **After merge**: remote head branch is **auto-deleted** (GitHub repo setting). Locally:
+   `git checkout main && git pull` then `git branch -d <type>/your-branch`
+5. When merging via CLI: `gh pr merge --delete-branch` (or `--squash --delete-branch`)
 
 ## No Direct Pushes to main
 

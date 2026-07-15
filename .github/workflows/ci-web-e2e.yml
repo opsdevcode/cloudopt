@@ -1,0 +1,81 @@
+# Browser E2E (Playwright): optional; run manually or on workflow_dispatch.
+# Starts the Compose backend so Next.js rewrites reach a live API.
+name: CI (Web E2E)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/web/e2e/**"
+      - "apps/web/playwright.config.ts"
+      - "apps/web/app/**"
+      - "apps/web/components/**"
+      - ".github/workflows/ci-web-e2e.yml"
+      - "docker-compose.yml"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  web-e2e:
+    name: Web E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Start backend stack
+        env:
+          CLOUDOPT_LLM_MODE: sandbox
+          COMPOSE_DOWN: "0"
+        run: |
+          docker compose up -d --wait postgres redis
+          export CLOUDOPT_DATABASE_URL=postgresql+asyncpg://cloudopt:cloudopt@localhost:5432/cloudopt
+          export CLOUDOPT_DATABASE_URL_SYNC=postgresql://cloudopt:cloudopt@localhost:5432/cloudopt
+          alembic upgrade head
+          docker compose up -d --build api worker
+          deadline=$((SECONDS + 120))
+          until curl -sf http://127.0.0.1:8000/health/ready | grep -q '"ready"'; do
+            if (( SECONDS > deadline )); then
+              docker compose logs api worker --tail 50
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Playwright
+        working-directory: apps/web
+        env:
+          CI: "true"
+          CLOUDOPT_API_ORIGIN: http://127.0.0.1:8000
+        run: npm run test:e2e
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down --remove-orphans

@@ -1,4 +1,4 @@
-.PHONY: help install dev up down migrate test test-all lint format typecheck check web
+.PHONY: help install dev up down migrate stack test test-all test-cov test-e2e lint format typecheck check web
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -9,6 +9,12 @@ install: ## Install the package with dev dependencies
 
 up: ## Start Postgres + Redis (Docker)
 	docker-compose up -d postgres redis
+
+stack: ## Start postgres, redis, migrate, api, and worker (full backend for e2e)
+	docker-compose up -d postgres redis
+	sleep 3
+	$(MAKE) migrate
+	docker-compose up -d api worker
 
 down: ## Stop the Docker stack
 	docker-compose down
@@ -27,6 +33,12 @@ test: ## Offline unit lane — no services/keys/network (sandbox LLM)
 
 test-all: ## Full suite including integration (requires Postgres via `make up && make migrate`)
 	pytest
+
+test-cov: ## Full suite with coverage report (requires Postgres for integration tests)
+	pytest --cov=apps --cov=packages --cov-report=term-missing
+
+test-e2e: ## Full stack smoke (Compose + Hurl; optional RUN_PY_E2E=1)
+	./scripts/e2e-stack-smoke.sh
 
 lint: ## Ruff lint
 	ruff check .

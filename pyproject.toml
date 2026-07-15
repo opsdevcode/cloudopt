@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=83", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -35,6 +35,7 @@ dependencies = [
     # Database
     "sqlalchemy>=2.0.0",
     "asyncpg>=0.29.0",
+    "greenlet>=3.0.0",
     "alembic>=1.13.0",
     "psycopg2-binary>=2.9.9",
     "pgvector>=0.2.5",
@@ -99,8 +100,17 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-v --tb=short"
 markers = [
-    "integration: requires Postgres/Redis (auto-skipped when CLOUDOPT_DATABASE_URL_SYNC is unreachable)",
+    "integration: requires Postgres (auto-skipped when CLOUDOPT_DATABASE_URL_SYNC is unreachable)",
+    "e2e: live stack smoke (Compose + Hurl; optional thin Python via CLOUDOPT_E2E_LIVE_API)",
 ]
+
+[tool.coverage.run]
+source = ["apps", "packages"]
+omit = ["tests/*", "alembic/versions/*"]
+
+[tool.coverage.report]
+fail_under = 40
+show_missing = true
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
