@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v0.7.0 (2026-07-17)
+
+### Chores
+
+- **rules**: Add long-running stall and resume SOP
+  ([#59](https://github.com/opsdevcode/cloudopt/pull/59),
+  [`ca1c80e`](https://github.com/opsdevcode/cloudopt/commit/ca1c80e16d8ecb2443b65373d49e52cf3d6e8564))
+
+### Features
+
+- **rag**: Expand pipeline, API search/ask, and web UI
+  ([#60](https://github.com/opsdevcode/cloudopt/pull/60),
+  [`199c3d4`](https://github.com/opsdevcode/cloudopt/commit/199c3d44216c657933a7685e57d131bf9e1000b3))
+
+
 ## v0.6.1 (2026-07-15)
 
 ### Bug Fixes
