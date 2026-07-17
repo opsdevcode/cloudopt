@@ -86,6 +86,19 @@ npm run test:e2e
 
 CI: **CI (Web E2E)** workflow (`ci-web-e2e.yml`) starts the Compose backend, then runs Playwright.
 
+## RAG API (search / ask)
+
+After finops scans populate `rag_chunks`, query via API:
+
+```bash
+curl "http://127.0.0.1:8000/api/v1/rag/search?tenant_id=default&q=cost"
+curl -X POST http://127.0.0.1:8000/api/v1/rag/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"tenant_id":"default","question":"What cost risks apply?"}'
+```
+
+Web UI: `/rag` (search + ask). Optional audit embedding: `CLOUDOPT_RAG_EMBED_AUDIT=true`.
+
 ## Component smoke (Vitest)
 
 ```bash
