@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from packages.core.database import Base
@@ -73,6 +73,14 @@ class RagChunk(Base):
     """Embedded text chunk for tenant-scoped RAG (findings, scan summaries, CUR snippets)."""
 
     __tablename__ = "rag_chunks"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "source_type",
+            "source_id",
+            name="uq_rag_chunks_tenant_source",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_str)
     tenant_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)

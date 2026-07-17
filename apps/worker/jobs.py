@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session
 
 from packages.ai.agent import run_finops_agent_sync
 from packages.ai.llm_client import LLMRouter
-from packages.ai.rag import ingest_finding_chunk_sync
+from packages.ai.rag import (
+    embed_audit_findings_sync,
+    ingest_finding_chunk_sync,
+    ingest_scan_summary_sync,
+)
 from packages.cloud_audit import (
     collect_config_non_compliant_rules,
     collect_security_hub_findings,
@@ -65,30 +69,30 @@ def dispatch_scan(scan_id: str) -> dict[str, Any]:
 
 def persist_audit_findings(
     session: Session, scan_id: str, items: list[NormalizedAuditFinding]
-) -> int:
-    """Insert normalized audit rows (no FinOps RAG embedding)."""
-    n = 0
+) -> list[Finding]:
+    """Insert normalized audit rows; optional RAG embedding is applied separately."""
+    created: list[Finding] = []
     for item in items:
-        session.add(
-            Finding(
-                scan_id=scan_id,
-                finding_kind=item.finding_kind,
-                framework=item.framework,
-                control_id=item.control_id,
-                audit_status=item.audit_status,
-                title=item.title,
-                category=item.category,
-                resource_type=item.resource_type,
-                resource_id=item.resource_id,
-                estimated_savings_monthly=0.0,
-                severity=item.severity,
-                description=item.description,
-                recommendation=item.recommendation,
-                details=item.details,
-            )
+        finding = Finding(
+            scan_id=scan_id,
+            finding_kind=item.finding_kind,
+            framework=item.framework,
+            control_id=item.control_id,
+            audit_status=item.audit_status,
+            title=item.title,
+            category=item.category,
+            resource_type=item.resource_type,
+            resource_id=item.resource_id,
+            estimated_savings_monthly=0.0,
+            severity=item.severity,
+            description=item.description,
+            recommendation=item.recommendation,
+            details=item.details,
         )
-        n += 1
-    return n
+        session.add(finding)
+        created.append(finding)
+    session.flush()
+    return created
 
 
 def run_aws_audit_scan(scan_id: str, *, finalize_scan: bool = True) -> dict[str, Any]:
@@ -105,7 +109,7 @@ def run_aws_audit_scan(scan_id: str, *, finalize_scan: bool = True) -> dict[str,
         if not scan:
             return {"scan_id": scan_id, "status": "error", "detail": "scan not found"}
 
-        persist_audit_findings(session, scan_id, combined)
+        created = persist_audit_findings(session, scan_id, combined)
 
         md = dict(scan.metadata_ or {})
         audit_sources = dict(md.get("audit_sources") or {})
@@ -113,6 +117,17 @@ def run_aws_audit_scan(scan_id: str, *, finalize_scan: bool = True) -> dict[str,
         audit_sources["config"] = {"count": len(cfg_raw), "error": cfg_err}
         md["audit_sources"] = audit_sources
         scan.metadata_ = md
+
+        if settings.rag_embed_audit and created:
+            router = LLMRouter.from_settings()
+            embed_client = router.client_for("embed")
+            embed_audit_findings_sync(
+                session,
+                scan.tenant_id,
+                created,
+                client=embed_client,
+                max_chunks=settings.rag_audit_max_chunks,
+            )
 
         if finalize_scan:
             scan.status = "completed"
@@ -160,10 +175,21 @@ def run_k8s_audit_scan(scan_id: str) -> dict[str, Any]:
         scan = session.scalar(select(Scan).where(Scan.id == scan_id))
         if not scan:
             return {"scan_id": scan_id, "status": "error", "detail": "scan not found"}
-        persist_audit_findings(session, scan_id, normalized)
+        created = persist_audit_findings(session, scan_id, normalized)
         md = dict(scan.metadata_ or {})
         md["k8s_audit_ingest"] = {"notes": notes, "count": len(normalized)}
         scan.metadata_ = md
+        settings = get_settings()
+        if settings.rag_embed_audit and created:
+            router = LLMRouter.from_settings()
+            embed_client = router.client_for("embed")
+            embed_audit_findings_sync(
+                session,
+                scan.tenant_id,
+                created,
+                client=embed_client,
+                max_chunks=settings.rag_audit_max_chunks,
+            )
         scan.status = "completed"
         scan.completed_at = datetime.now(UTC)
 
@@ -237,6 +263,15 @@ def generate_findings(scan_id: str) -> dict[str, Any]:
         embed_client = router.client_for("embed")
         for finding in created:
             ingest_finding_chunk_sync(session, scan.tenant_id, finding, client=embed_client)
+
+        summary_text = str(result.get("summary", ""))
+        ingest_scan_summary_sync(
+            session,
+            scan,
+            summary_text,
+            len(created),
+            client=embed_client,
+        )
 
         scan.status = "completed"
         scan.completed_at = datetime.now(UTC)

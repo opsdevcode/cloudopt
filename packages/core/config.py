@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     agent_tools_enabled: bool = True
     agent_max_tool_rounds: int = 6
 
+    # RAG ingest controls
+    rag_embed_audit: bool = False
+    rag_audit_max_chunks: int = 20
+
     @field_validator("api_base_url", mode="before")
     @classmethod
     def _strip_api_base_url(cls, v: object) -> object:

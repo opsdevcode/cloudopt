@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from apps.api.routes import findings, health, metrics, scans
+from apps.api.routes import findings, health, metrics, rag, scans
 from packages.core.config import get_settings
 
 
@@ -39,6 +39,7 @@ app.include_router(health.router, tags=["health"])
 app.include_router(scans.router, prefix="/api/v1/scans", tags=["scans"])
 app.include_router(findings.router, prefix="/api/v1/findings", tags=["findings"])
 app.include_router(metrics.router, prefix="/api/v1/metrics", tags=["metrics"])
+app.include_router(rag.router, prefix="/api/v1/rag", tags=["rag"])
 
 
 @app.get("/")
